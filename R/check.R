@@ -76,7 +76,8 @@ checks <- list(
   "Codex sign-in" = check_codex,
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
-  "Agents connected to KoboToolbox" = check_kobo_agents
+  "Agents connected to KoboToolbox" = check_kobo_agents,
+  "Course organization" = function() check_course()
 )
 
 #' Print a pass or fail line for every course requirement.
@@ -84,8 +85,9 @@ checks <- list(
 check <- function() {
   res <- lapply(checks, function(f) tryCatch(f(), error = function(e) list(ok = FALSE, detail = conditionMessage(e))))
   cat("\nPPOL 6818 setup check,", format(Sys.time(), "%Y-%m-%d %H:%M"), "\n")
-  for (n in names(res)) cat(sprintf("  %-34s %s  %s\n", n, if (res[[n]]$ok) "PASS" else "FAIL", res[[n]]$detail))
-  ok <- all(vapply(res, `[[`, TRUE, "ok"))
+  mark <- function(ok) if (is.na(ok)) "WAIT" else if (ok) "PASS" else "FAIL"
+  for (n in names(res)) cat(sprintf("  %-34s %s  %s\n", n, mark(res[[n]]$ok), res[[n]]$detail))
+  ok <- !any(vapply(res, function(r) isFALSE(r$ok), TRUE))
   cat(if (ok) "\nEverything passes. Submit this output on Canvas.\n"
       else "\nSomething failed. Click Addins > Course setup to fix it.\n")
   invisible(res)

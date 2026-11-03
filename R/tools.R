@@ -10,7 +10,8 @@ tool_dirs <- function() {
     "/opt/homebrew/bin", "/usr/local/bin",
     file.path(Sys.getenv("LOCALAPPDATA"), "Programs"),
     file.path(Sys.getenv("APPDATA"), "npm"),
-    "C:/Program Files/GitHub CLI")
+    file.path(Sys.getenv("LOCALAPPDATA"), "Microsoft", "WinGet", "Links"),
+    "C:/Program Files/GitHub CLI", "C:/Program Files/Git/cmd")
 }
 
 find_tool <- function(name) {
@@ -27,7 +28,9 @@ find_tool <- function(name) {
 run_tool <- function(name, args = character(), timeout = 60) {
   path <- find_tool(name)
   if (!nzchar(path)) return(list(status = 127L, out = paste(name, "is not installed")))
-  out <- suppressWarnings(system2(path, args, stdout = TRUE, stderr = TRUE, timeout = timeout))
+  # system2 hands arguments to a shell unquoted; quote them so & ? and spaces survive.
+  q <- if (.Platform$OS.type == "windows") shQuote(args, type = "cmd") else shQuote(args)
+  out <- suppressWarnings(system2(path, q, stdout = TRUE, stderr = TRUE, timeout = timeout))
   status <- attr(out, "status")
   list(status = if (is.null(status)) 0L else status, out = paste(out, collapse = "\n"))
 }

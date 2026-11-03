@@ -122,6 +122,7 @@ setup <- function() {
   setup_ipums()
   setup_kobo_agents()
   opencode_set_model()
+  sync_course()
   invisible(check())
 }
 
