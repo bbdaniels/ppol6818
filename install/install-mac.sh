@@ -76,5 +76,6 @@ if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("bbdaniels/ppol6818", ask = FALSE)'
 PROJECT="$("$RSCRIPT" -e 'cat(ppol6818::make_course_project())')"
 
+if [ -n "${CI:-}" ]; then echo "Course project: $PROJECT"; exit 0; fi
 say "Done. RStudio is opening the course project; course setup continues there."
 open -a RStudio "$PROJECT"

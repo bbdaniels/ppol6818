@@ -100,20 +100,17 @@ renviron_set <- function(key, value) {
   invisible(TRUE)
 }
 
-# Earlier setups saved keys in ~/.Renviron (on Windows, Documents, often in
-# OneDrive). Move them to the course folder and delete them there.
+# A student may already have course keys in ~/.Renviron (for example an IPUMS
+# key from other work). Copy any the course file lacks; never edit
+# ~/.Renviron, which other R projects on the computer read.
 migrate_keys <- function() {
   old <- path.expand("~/.Renviron")
   if (!file.exists(old) || normalizePath(old) == normalizePath(keys_file(), mustWork = FALSE)) return(invisible())
-  lines <- readLines(old, warn = FALSE)
-  hit <- vapply(lines, function(l) any(startsWith(l, paste0(key_names, "="))), TRUE)
-  if (!any(hit)) return(invisible())
-  for (l in lines[hit]) {
+  have <- if (file.exists(keys_file())) sub("=.*", "", readLines(keys_file(), warn = FALSE)) else character()
+  for (l in readLines(old, warn = FALSE)) {
     k <- sub("=.*", "", l)
-    renviron_set(k, sub("^[^=]*=", "", l))
+    if (k %in% key_names && !(k %in% have)) renviron_set(k, sub("^[^=]*=", "", l))
   }
-  rest <- lines[!hit]
-  if (length(rest) && any(nzchar(trimws(rest)))) writeLines(rest, old) else unlink(old)
   invisible()
 }
 

@@ -1,0 +1,35 @@
+# Runs each installer on a GitHub test machine, then tests/installed.R.
+# Test machines already have some programs (R, Git), so this covers the
+# installer's own steps, the course folder, the paths and key loading; the
+# browser sign-ins and Windows' permission prompt need a person.
+name: Installers
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["install/**", "R/**", "inst/**", "tests/installed.R", ".github/workflows/installers.yml"]
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File install/install-windows.ps1
+      - name: Test
+        shell: powershell
+        run: |
+          $r = Get-ChildItem "C:\Program Files\R\R-*\bin\Rscript.exe" | Sort-Object FullName | Select-Object -Last 1
+          Set-Location (Join-Path $env:USERPROFILE "Projects\ppol-6818")
+          & $r.FullName (Join-Path $env:GITHUB_WORKSPACE "tests\installed.R")
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: /bin/bash install/install-mac.sh
+      - name: Test
+        run: |
+          cd ~/Projects/ppol-6818
+          Rscript "$GITHUB_WORKSPACE/tests/installed.R"
