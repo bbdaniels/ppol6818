@@ -80,8 +80,16 @@ check_kobo_agents <- function() {
        detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
 }
 
+check_folder <- function() {
+  d <- course_dir()
+  if (!dir.exists(d)) return(list(ok = FALSE, detail = paste("missing:", d)))
+  if (synced_folder(d)) return(list(ok = FALSE, detail = paste("inside a cloud-synced folder:", d)))
+  list(ok = TRUE, detail = d)
+}
+
 checks <- list(
   "Programs installed" = check_tools,
+  "Course folder" = check_folder,
   "GitHub sign-in" = check_github,
   "Course agent" = function() if (default_agent == "codex") check_codex() else check_opencode(),
   "KoboToolbox key" = check_kobo,

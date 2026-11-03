@@ -3,11 +3,14 @@
 
 course_org <- "ppol-6818-2027"
 
-#' The folder that holds the course project and every course repository.
+#' The folder that holds the course project and every course repository:
+#' ppol-6818 in the Projects folder of the home folder (made if missing; Mac
+#' and Windows ignore case, so an existing "projects" folder is used), never
+#' in a folder iCloud or OneDrive syncs.
 #' @export
 course_dir <- function() {
   d <- Sys.getenv("PPOL6818_DIR")
-  if (nzchar(d)) d else file.path(path.expand("~"), "PPOL6818")
+  if (nzchar(d)) d else file.path(home_dir(), "Projects", "ppol-6818")
 }
 
 gh_json <- function(args) {
@@ -95,9 +98,12 @@ on_open <- function() {
 #' @export
 make_course_project <- function() {
   d <- course_dir()
+  if (synced_folder(d))
+    stop("The course folder ", d, " is inside a folder that iCloud, OneDrive or another cloud service syncs. ",
+         "Course repositories must not be synced. Unset PPOL6818_DIR or set it to a folder outside it.", call. = FALSE)
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
   src <- system.file("project", package = "ppol6818")
-  file.copy(file.path(src, "PPOL6818.Rproj"), file.path(d, "PPOL6818.Rproj"), overwrite = TRUE)
+  file.copy(file.path(src, "ppol-6818.Rproj"), file.path(d, "ppol-6818.Rproj"), overwrite = TRUE)
   file.copy(file.path(src, "Rprofile"), file.path(d, ".Rprofile"), overwrite = TRUE)
-  file.path(d, "PPOL6818.Rproj")
+  file.path(d, "ppol-6818.Rproj")
 }

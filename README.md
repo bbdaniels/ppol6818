@@ -16,7 +16,7 @@ Windows, in PowerShell:
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
 ```
 
-The installer installs R, RStudio, Git, the GitHub command-line tool, uv, Codex, OpenCode and this package, creates the course folder `~/PPOL6818`, and opens it in RStudio. Opening that project runs course setup until every check passes; after that it accepts course invitations and downloads new course repositories into `~/PPOL6818` each time it opens.
+The installer installs R, RStudio, Git, the GitHub command-line tool, uv, Codex, OpenCode and this package, creates the course folder `Projects/ppol-6818` in the home folder (never in iCloud or OneDrive), and opens it in RStudio. Opening that project runs course setup until every check passes; after that it accepts course invitations and downloads new course repositories into `~/PPOL6818` each time it opens.
 
 ## In RStudio
 

@@ -26,7 +26,7 @@ On Windows, open PowerShell from the Start menu, paste this line and press Enter
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
 ```
 
-On a Mac the installer asks for your computer password once (it does not show as you type); on Windows, click Yes when Windows asks to allow changes. The installer then installs R, RStudio, Git, the GitHub tools, Codex, OpenCode and the course R package. Anything already on your computer is kept. When it finishes, RStudio opens the course folder, `PPOL6818` in your home folder.
+On a Mac the installer asks for your computer password once (it does not show as you type); on Windows, click Yes when Windows asks to allow changes. The installer then installs R, RStudio, Git, the GitHub tools, Codex, OpenCode and the course R package. Anything already on your computer is kept. When it finishes, RStudio opens the course folder, `ppol-6818` inside the `Projects` folder in your home folder (setup makes `Projects` if you do not have one). Keep it there: course folders must not be in iCloud, OneDrive or another synced folder, because syncing damages Git repositories.
 
 ## 3. Finish setup in RStudio
 
@@ -35,6 +35,7 @@ RStudio continues where the installer stopped. It walks you through each sign-in
 ```
 PPOL 6818 setup check
   Programs installed                 PASS
+  Course folder                      PASS
   GitHub sign-in                     PASS  your-username
   Course agent                       PASS
   KoboToolbox key                    PASS
@@ -47,7 +48,7 @@ Copy the whole check, with your GitHub username, into the Setup assignment on Ca
 
 ## 4. Join the course organization
 
-After we invite you, open the `PPOL6818` project in RStudio again (File, Recent Projects). RStudio accepts the invitation and downloads each new course repository into the `PPOL6818` folder. RStudio repeats this every time you open a course project. New repositories for later assignments arrive the same way.
+After we invite you, open the `ppol-6818` project in RStudio again (File, Recent Projects). RStudio accepts the invitation and downloads each new course repository into the `ppol-6818` folder. RStudio repeats this every time you open a course project. New repositories for later assignments arrive the same way.
 
 ## Working with the agents
 

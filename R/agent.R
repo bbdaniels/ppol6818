@@ -7,7 +7,7 @@ default_agent <- "opencode"
 free_model <- "opencode/glm-5.3-flash-free"
 
 opencode_global_config <- function() {
-  file.path(Sys.getenv("XDG_CONFIG_HOME", path.expand("~/.config")), "opencode", "opencode.json")
+  file.path(Sys.getenv("XDG_CONFIG_HOME", file.path(home_dir(), ".config")), "opencode", "opencode.json")
 }
 
 opencode_set_kobo <- function(uvx, tok) {

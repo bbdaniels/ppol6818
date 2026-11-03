@@ -5,7 +5,7 @@
 #
 # It installs R, RStudio, Git, the GitHub command-line tool, uv, Codex and
 # OpenCode, installs the course R package, creates the course folder
-# ~/PPOL6818, and opens it in RStudio, where course setup continues.
+# ~/Projects/ppol-6818, and opens it in RStudio, where course setup continues.
 # It is safe to run again: anything already installed is kept.
 
 set -euo pipefail

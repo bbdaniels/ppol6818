@@ -2,8 +2,31 @@
 # RStudio does not read the shell's startup files, so a tool installed into a
 # user folder is often missing from PATH here; look in the install folders too.
 
+# The user's home folder. On Windows, R's "~" is the Documents folder, which
+# OneDrive often syncs; programs such as OpenCode use USERPROFILE instead.
+home_dir <- function() {
+  if (.Platform$OS.type == "windows" && nzchar(Sys.getenv("USERPROFILE")))
+    normalizePath(Sys.getenv("USERPROFILE"), winslash = "/", mustWork = FALSE)
+  else path.expand("~")
+}
+
+# A folder that iCloud, OneDrive, Dropbox or Google Drive syncs. Git
+# repositories break there (files evicted, conflict copies inside .git), and
+# IPUMS data in a repository's data folder would be uploaded to the cloud.
+synced_folder <- function(d) {
+  d <- normalizePath(d, winslash = "/", mustWork = FALSE)
+  home <- home_dir()
+  roots <- c(file.path(home, c("Documents", "Desktop")),
+             file.path(home, "Library", c("Mobile Documents", "CloudStorage")),
+             Sys.getenv(c("OneDrive", "OneDriveCommercial", "OneDriveConsumer")))
+  roots <- normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE)
+  under <- function(r) tolower(d) == tolower(r) || startsWith(tolower(d), paste0(tolower(r), "/"))
+  any(vapply(roots, under, TRUE)) ||
+    grepl("onedrive|icloud|dropbox|google ?drive", d, ignore.case = TRUE)
+}
+
 tool_dirs <- function() {
-  home <- path.expand("~")
+  home <- home_dir()
   c(file.path(home, ".opencode", "bin"),
     file.path(home, ".local", "bin"),
     file.path(home, ".cargo", "bin"),
