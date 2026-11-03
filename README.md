@@ -10,4 +10,4 @@ The course installer installs this package. In RStudio it adds three entries to 
 
 Both agents can read and deploy KoboToolbox forms through `kobo-mcp`. IPUMS data is downloaded with your own key through `ipumsr`; see `inst/examples/ipums-extract.R`. IPUMS data never goes into a repository.
 
-Install by hand: `install.packages("remotes"); remotes::install_github("bbdaniels/ppol6818")`, then `ppol6818::setup()`.
+Install by hand: `install.packages("pak"); pak::pak("bbdaniels/ppol6818")`, then `ppol6818::setup()`.
