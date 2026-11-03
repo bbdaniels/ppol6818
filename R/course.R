@@ -34,9 +34,10 @@ accept_invitations <- function() {
   accepted
 }
 
-# Course repositories the student can push to (the template is not one).
+# Course repositories the student was added to directly (create_repos adds
+# each student as a collaborator; organization-wide access does not count).
 my_course_repos <- function() {
-  repos <- gh_json(c("user/repos?per_page=100&affiliation=collaborator,organization_member", "--paginate")) %||% list()
+  repos <- gh_json(c("user/repos?per_page=100&affiliation=collaborator", "--paginate")) %||% list()
   names <- vapply(repos, function(r) if (identical(r$owner$login, course_org) && isTRUE(r$permissions$push) && !isTRUE(r$is_template)) r$full_name else NA_character_, "")
   sort(unique(names[!is.na(names)]))
 }
