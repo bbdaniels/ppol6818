@@ -85,10 +85,19 @@ setup_kobo <- function() {
 
 setup_ipums <- function() {
   if (check_ipums()$ok) return(invisible())
+  if (grepl("not registered", check_ipums()$detail)) {
+    utils::browseURL(links$ipums_signup)
+    return(tell("IPUMS USA", "Your key works, but your IPUMS account is not yet registered for IPUMS USA. Fill in the USA registration page now open, then rerun Course setup once IPUMS approves it."))
+  }
   account_first("IPUMS USA", links$ipums_signup)
   utils::browseURL(links$ipums_keys)
   key <- secret("On the IPUMS page now open, sign in, create an API key, copy it, and paste it here")
   if (nzchar(key)) renviron_set("IPUMS_API_KEY", key)
+  if (grepl("not registered", check_ipums()$detail)) {
+    utils::browseURL(links$ipums_signup)
+    tell("IPUMS USA", paste("Your key works, but your IPUMS account is not yet registered for IPUMS USA.",
+                            "Fill in the USA registration page now open, then rerun Course setup once IPUMS approves it."))
+  }
 }
 
 # Register the KoboToolbox connector with both agents, using the key in

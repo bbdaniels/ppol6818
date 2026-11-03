@@ -46,6 +46,8 @@ check_ipums <- function() {
   if (!nzchar(key)) return(list(ok = FALSE, detail = "no key"))
   r <- http_status("https://api.ipums.org/extracts?collection=usa&version=2&pageSize=1",
                    c(Authorization = key))
+  if (r$status == 401 && grepl("not registered", r$body))
+    return(list(ok = FALSE, detail = "key works, but this account is not registered for IPUMS USA yet"))
   if (r$status != 200) return(list(ok = FALSE, detail = paste("key refused, HTTP", r$status)))
   list(ok = TRUE, detail = "key works")
 }
