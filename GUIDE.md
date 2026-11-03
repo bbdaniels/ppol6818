@@ -4,9 +4,9 @@ You will do all of your coding for this course in RStudio, with an AI coding age
 
 ## 1. Create three accounts
 
-Use your Georgetown email address for each one.
+Use your personal email address for each one, so that you keep the accounts after you leave Georgetown.
 
-- **GitHub** (https://github.com/signup). Then apply for GitHub Education (https://github.com/settings/education/benefits) with your Georgetown email; approval can take a few days, and setup works before it arrives.
+- **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and setup works before it arrives.
 - **IPUMS USA** (https://uma.pop.umn.edu/usa/user/new). Approval usually arrives by email within a day.
 - **KoboToolbox** (https://kf.kobotoolbox.org/accounts/signup/), on the global server.
 

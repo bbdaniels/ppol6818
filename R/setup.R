@@ -33,7 +33,8 @@ account_first <- function(service, signup, extra = NULL) {
   if (!ask(service, paste0("Do you already have a ", service, " account?"))) {
     utils::browseURL(signup)
     tell(service, paste0("A sign-up page for ", service, " is open in your browser. ",
-                         "Create the account, confirm your email, then click OK here."))
+                         "Create the account with your personal email, so you keep it after Georgetown. ",
+                         "Confirm your email, then click OK here."))
     if (!is.null(extra)) extra()
   }
 }
@@ -42,7 +43,8 @@ setup_github <- function() {
   if (check_github()$ok) return(invisible())
   account_first("GitHub", links$github_signup, function() {
     utils::browseURL(links$github_education)
-    tell("GitHub", paste("The GitHub Education page is open. Apply with your Georgetown email",
+    tell("GitHub", paste("The GitHub Education page is open. Add your Georgetown email to your GitHub account",
+                         "as a second address (Settings > Emails), then apply with it",
                          "(approval can take a few days; you can keep going). Click OK when submitted."))
   })
   in_terminal("gh", c("auth", "login", "--web", "--hostname", "github.com", "--git-protocol", "https"))
