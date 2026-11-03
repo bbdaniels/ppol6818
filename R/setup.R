@@ -103,7 +103,7 @@ setup_ipums <- function() {
 }
 
 # Register the KoboToolbox connector with both agents, using the key in
-# ~/.Renviron. Rerunning replaces the old entry, so a new key propagates.
+# the course folder's .Renviron. Rerunning replaces the old entry, so a new key propagates.
 setup_kobo_agents <- function() {
   tok <- Sys.getenv("KOBO_API_TOKEN")
   if (!nzchar(tok)) return(invisible())
@@ -127,6 +127,8 @@ setup <- function() {
          "\nRun the course installer again (see Canvas), then click Addins > Course setup."))
     return(invisible(check()))
   }
+  migrate_keys()
+  load_keys()
   setup_github()
   setup_codex()
   setup_kobo()

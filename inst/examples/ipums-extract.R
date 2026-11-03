@@ -1,6 +1,7 @@
 # Download a small IPUMS USA extract with your own key.
-# Course setup saved the key as IPUMS_API_KEY in ~/.Renviron, which ipumsr
-# reads on its own. IPUMS data may not be shared, so the data file stays on
+# Course setup saved the key as IPUMS_API_KEY in the course folder's
+# .Renviron, which every course project loads at start; ipumsr then finds it.
+# IPUMS data may not be shared, so the data file stays on
 # your computer: the "data/" folder is in .gitignore, and this script is how
 # anyone else gets the same data.
 

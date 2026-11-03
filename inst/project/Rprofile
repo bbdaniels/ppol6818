@@ -1,6 +1,9 @@
-# PPOL 6818 course project: when RStudio opens this project, finish setup the
-# first time, and afterwards accept course invitations and clone new course
-# repositories.
-if (interactive() && requireNamespace("ppol6818", quietly = TRUE)) {
-  setHook("rstudio.sessionInit", function(newSession) ppol6818::on_open(), action = "append")
+# PPOL 6818 course project: load the course keys (KoboToolbox, IPUMS) in
+# every session, including Rscript runs; when RStudio opens the project,
+# finish setup the first time, and afterwards accept course invitations and
+# clone new course repositories.
+if (requireNamespace("ppol6818", quietly = TRUE)) {
+  ppol6818::load_keys()
+  if (interactive())
+    setHook("rstudio.sessionInit", function(newSession) ppol6818::on_open(), action = "append")
 }

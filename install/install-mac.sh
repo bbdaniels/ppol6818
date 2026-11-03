@@ -14,7 +14,18 @@ say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 have_app() { [ -d "/Applications/$1.app" ]; }
 
 say "PPOL 6818 course installer"
-echo "Your Mac password may be requested once (it does not show as you type)."
+
+if ! /usr/sbin/dseditgroup -o checkmember -m "$USER" admin >/dev/null 2>&1; then
+  echo "This Mac account is not an administrator, so it cannot install programs."
+  echo "Sign in to an administrator account (System Settings, Users & Groups) and run this line again."
+  exit 1
+fi
+
+# Ask for the password once, then keep sudo alive until the installer exits,
+# so Homebrew and the R and RStudio installers never stop to ask again.
+echo "Enter your Mac password (it does not show as you type), then press Return."
+sudo -v
+while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done 2>/dev/null &
 
 if ! command -v brew >/dev/null 2>&1; then
   for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
@@ -23,7 +34,7 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 if ! command -v brew >/dev/null 2>&1; then
   say "Installing Homebrew (the Mac installer for the other programs)"
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
     [ -x "$b" ] && eval "$("$b" shellenv)" && break
   done
@@ -53,6 +64,10 @@ else
   say "Installing Codex"
   brew install --cask codex
 fi
+
+# RStudio and R come from the developers and are notarized; clearing the
+# download flag skips macOS asking "Are you sure you want to open it?".
+xattr -dr com.apple.quarantine /Applications/RStudio.app 2>/dev/null || true
 
 RSCRIPT="$(command -v Rscript || echo /Library/Frameworks/R.framework/Resources/bin/Rscript)"
 say "Installing the course R package (a few minutes the first time)"

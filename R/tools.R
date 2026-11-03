@@ -74,15 +74,47 @@ http_status <- function(url, headers = character()) {
   list(status = r$status_code, body = rawToChar(r$content))
 }
 
-# Keys live in the student's ~/.Renviron, which R reads at every start.
+# Keys live in the course folder's .Renviron: outside every repository and
+# every synced folder. R reads only one .Renviron at startup (the working
+# directory's, else ~/.Renviron), and each course repository is its own
+# project, so every course .Rprofile calls load_keys() instead.
+keys_file <- function() file.path(course_dir(), ".Renviron")
+key_names <- c("KOBO_API_TOKEN", "IPUMS_API_KEY")
+
+#' Load the course keys (KoboToolbox, IPUMS) into this R session.
+#' @export
+load_keys <- function() {
+  f <- keys_file()
+  if (file.exists(f)) readRenviron(f)
+  invisible(f)
+}
+
 renviron_set <- function(key, value) {
-  f <- path.expand("~/.Renviron")
+  f <- keys_file()
+  dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
   lines <- if (file.exists(f)) readLines(f, warn = FALSE) else character()
   lines <- lines[!startsWith(lines, paste0(key, "="))]
   writeLines(c(lines, paste0(key, "=", value)), f)
   Sys.chmod(f, "600")
   do.call(Sys.setenv, stats::setNames(list(value), key))
   invisible(TRUE)
+}
+
+# Earlier setups saved keys in ~/.Renviron (on Windows, Documents, often in
+# OneDrive). Move them to the course folder and delete them there.
+migrate_keys <- function() {
+  old <- path.expand("~/.Renviron")
+  if (!file.exists(old) || normalizePath(old) == normalizePath(keys_file(), mustWork = FALSE)) return(invisible())
+  lines <- readLines(old, warn = FALSE)
+  hit <- vapply(lines, function(l) any(startsWith(l, paste0(key_names, "="))), TRUE)
+  if (!any(hit)) return(invisible())
+  for (l in lines[hit]) {
+    k <- sub("=.*", "", l)
+    renviron_set(k, sub("^[^=]*=", "", l))
+  }
+  rest <- lines[!hit]
+  if (length(rest) && any(nzchar(trimws(rest)))) writeLines(rest, old) else unlink(old)
+  invisible()
 }
 
 state_file <- function(name) {
