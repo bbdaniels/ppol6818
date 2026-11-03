@@ -1,0 +1,128 @@
+# Course setup: each step checks first and acts only when the check fails.
+# Web sign-ins cannot be seen from R, so a missing account is detected by its
+# key or command-line sign-in failing; the student is then asked whether they
+# have an account, and sent to the sign-up page if not.
+
+ask <- function(title, message, yes = "Yes", no = "No") {
+  if (rstudioapi::isAvailable()) rstudioapi::showQuestion(title, message, yes, no)
+  else utils::askYesNo(message)
+}
+
+tell <- function(title, message) {
+  if (rstudioapi::isAvailable()) rstudioapi::showDialog(title, message) else message(message)
+}
+
+secret <- function(prompt) {
+  v <- if (rstudioapi::isAvailable()) rstudioapi::askForSecret("ppol6818", prompt, prompt)
+       else readline(paste0(prompt, ": "))
+  if (is.null(v)) "" else trimws(v)
+}
+
+# Wait for a sign-in the student completes in the browser or the Terminal.
+wait_for <- function(check_fn, what, minutes = 10) {
+  message("Waiting for ", what, " (finish it in the browser, then come back) ...")
+  end <- Sys.time() + minutes * 60
+  while (Sys.time() < end) {
+    if (isTRUE(check_fn()$ok)) return(TRUE)
+    Sys.sleep(3)
+  }
+  FALSE
+}
+
+account_first <- function(service, signup, extra = NULL) {
+  if (!ask(service, paste0("Do you already have a ", service, " account?"))) {
+    utils::browseURL(signup)
+    tell(service, paste0("A sign-up page for ", service, " is open in your browser. ",
+                         "Create the account, confirm your email, then click OK here."))
+    if (!is.null(extra)) extra()
+  }
+}
+
+setup_github <- function() {
+  if (check_github()$ok) return(invisible())
+  account_first("GitHub", links$github_signup, function() {
+    utils::browseURL(links$github_education)
+    tell("GitHub", paste("The GitHub Education page is open. Apply with your Georgetown email",
+                         "(approval can take a few days; you can keep going). Click OK when submitted."))
+  })
+  in_terminal("gh", c("auth", "login", "--web", "--hostname", "github.com", "--git-protocol", "https"))
+  tell("GitHub", "The Terminal shows a one-time code. Press Enter there, paste the code in the browser, and approve.")
+  wait_for(check_github, "GitHub sign-in")
+  run_tool("gh", c("auth", "setup-git"))
+}
+
+setup_codex <- function() {
+  if (check_codex()$ok) return(invisible())
+  account_first("ChatGPT", links$chatgpt, function() {
+    utils::browseURL(links$codex_students)
+    tell("Codex", "The Codex for Students page is open. Claim the offer, then click OK. If it is refused, click OK anyway: the free agent covers you.")
+  })
+  in_terminal("codex", "login")
+  wait_for(check_codex, "Codex sign-in")
+}
+
+kobo_token_from_password <- function() {
+  user <- if (rstudioapi::isAvailable()) rstudioapi::showPrompt("KoboToolbox", "KoboToolbox username") else readline("KoboToolbox username: ")
+  if (!nzchar(user %||% "")) return("")
+  pw <- secret("KoboToolbox password (used once to fetch your key, never saved)")
+  h <- curl::new_handle(timeout = 20, httpauth = 1L, userpwd = paste0(user, ":", pw))
+  r <- tryCatch(curl::curl_fetch_memory(paste0(kobo_server(), "/token/?format=json"), handle = h),
+                error = function(e) NULL)
+  if (is.null(r) || r$status_code != 200) return("")
+  tryCatch(jsonlite::fromJSON(rawToChar(r$content))$token %||% "", error = function(e) "")
+}
+
+setup_kobo <- function() {
+  if (check_kobo()$ok) return(invisible())
+  account_first("KoboToolbox", links$kobo_signup)
+  tok <- kobo_token_from_password()
+  if (!nzchar(tok)) {
+    utils::browseURL(paste0(kobo_server(), "/#/account/security"))
+    tok <- secret("Could not fetch the key automatically. On the page now open, click Display next to API Key, copy it, and paste it here")
+  }
+  if (nzchar(tok)) renviron_set("KOBO_API_TOKEN", tok)
+}
+
+setup_ipums <- function() {
+  if (check_ipums()$ok) return(invisible())
+  account_first("IPUMS USA", links$ipums_signup)
+  utils::browseURL(links$ipums_keys)
+  key <- secret("On the IPUMS page now open, sign in, create an API key, copy it, and paste it here")
+  if (nzchar(key)) renviron_set("IPUMS_API_KEY", key)
+}
+
+# Register the KoboToolbox connector with both agents, using the key in
+# ~/.Renviron. Rerunning replaces the old entry, so a new key propagates.
+setup_kobo_agents <- function() {
+  tok <- Sys.getenv("KOBO_API_TOKEN")
+  if (!nzchar(tok)) return(invisible())
+  uvx <- find_tool("uvx")
+  # Download the connector now: on a first launch the agent would otherwise
+  # start before the download finishes and run without the Kobo tools.
+  run_tool("uvx", c("--refresh-package", "kobo-mcp", "--from", "kobo-mcp", "python", "-c", "pass"), timeout = 300)
+  env <-c("--env", paste0("KOBO_API_TOKEN=", tok), "--env", paste0("KOBO_SERVER=", kobo_server()))
+  run_tool("codex", c("mcp", "remove", "kobo"))
+  run_tool("codex", c("mcp", "add", "kobo", env, "--", uvx, "kobo-mcp"))
+  opencode_set_kobo(uvx, tok)
+  invisible()
+}
+
+#' Set up everything the course needs, fixing whatever is missing, then
+#' print the pass or fail report. Safe to rerun at any time.
+#' @export
+setup <- function() {
+  if (!check_tools()$ok) {
+    tell("Programs missing", paste(check_tools()$detail,
+         "\nRun the course installer again (see Canvas), then click Addins > Course setup."))
+    return(invisible(check()))
+  }
+  setup_github()
+  setup_codex()
+  setup_kobo()
+  setup_ipums()
+  setup_kobo_agents()
+  opencode_set_model()
+  invisible(check())
+}
+
+`%||%` <- function(a, b) if (is.null(a) || length(a) == 0) b else a
