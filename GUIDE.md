@@ -2,12 +2,11 @@
 
 You will do all of your coding for this course in RStudio, with an AI coding agent beside you in RStudio's Terminal. Setup takes about half an hour, most of it waiting for downloads, and is due Sunday, January 17, 2027.
 
-## 1. Create four accounts
+## 1. Create three accounts
 
 Use your Georgetown email address for each one.
 
 - **GitHub** (https://github.com/signup). Then apply for GitHub Education (https://github.com/settings/education/benefits) with your Georgetown email; approval can take a few days, and setup works before it arrives.
-- **ChatGPT** (https://chatgpt.com), then claim Codex for Students (https://chatgpt.com/codex/students). Codex is the coding agent you will use most.
 - **IPUMS USA** (https://uma.pop.umn.edu/usa/user/new). Approval usually arrives by email within a day.
 - **KoboToolbox** (https://kf.kobotoolbox.org/accounts/signup/), on the global server.
 
@@ -37,7 +36,7 @@ RStudio continues where the installer stopped. It walks you through each sign-in
 PPOL 6818 setup check
   Programs installed                 PASS
   GitHub sign-in                     PASS  your-username
-  Codex sign-in                      PASS
+  Course agent                       PASS
   KoboToolbox key                    PASS
   IPUMS key                          PASS
   Agents connected to KoboToolbox    PASS
@@ -52,10 +51,10 @@ After we invite you, open the `PPOL6818` project in RStudio again (File, Recent 
 
 ## Working with the agents
 
-Click **Addins > Course agent** to open Codex in RStudio's Terminal, in the project you have open. Ask it in plain English to write, run and check code. The agents read the course rules from the file `AGENTS.md` in each repository: they write code and show you evidence that it worked, and they do not write the prose you submit.
+Click **Addins > Course agent** to open the course agent (OpenCode, on a free model) in RStudio's Terminal, in the project you have open. It needs no account. Ask it in plain English to write, run and check code. The agent reads the course rules from the file `AGENTS.md` in each repository: it writes code and shows you evidence that it worked, and it does not write the prose you submit.
 
-Codex for Students includes a monthly allowance. When Codex says you are out of credits, quit it (type `/quit`) and click **Addins > Course agent (free)**. That opens OpenCode on a free model, with the same KoboToolbox connection and the same course rules.
+The installer also installs Codex, a second agent. If we switch the course to Codex during the semester, we will tell you, and setup will ask you to sign in to it.
 
 ## Data
 
-Your IPUMS data never goes into a repository; the IPUMS terms do not allow sharing it. Each repository has a `run.R` that downloads your extract with your own key into a `data` folder that Git ignores. Your KoboToolbox forms live in your own KoboToolbox account, and both agents can create, deploy and read them for you.
+Your course repositories are private; only the minisite you publish from them is public. Your IPUMS data never goes into a repository, because the IPUMS terms do not allow sharing it. Each repository has a `run.R` that downloads your extract with your own key into a `data` folder that Git ignores. Your KoboToolbox forms live in your own KoboToolbox account, and the agent can create, deploy and read them for you.

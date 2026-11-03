@@ -1,6 +1,9 @@
-# The course agent: Codex by default, OpenCode with a free model when Codex
-# is not signed in or stops with an error (for example, credits used up).
+# The course agent. OpenCode on a free GLM model is the default; Codex is
+# installed as the alternative. To switch the course to Codex, set
+# default_agent to "codex": setup then requires the Codex sign-in and
+# Addins > Course agent opens Codex.
 
+default_agent <- "opencode"
 free_model <- "opencode/glm-5.3-flash-free"
 
 opencode_global_config <- function() {
@@ -25,20 +28,14 @@ opencode_set_model <- function() {
 }
 
 #' Open the course AI agent in RStudio's Terminal, in the current project.
-#' @param which "auto" (Codex, falling back to the free agent), "codex" or "free".
+#' @param which "opencode" or "codex"; the course default when omitted.
 #' @export
-agent <- function(which = c("auto", "codex", "free")) {
-  which <- match.arg(which)
-  codex <- find_tool("codex")
-  opencode <- find_tool("opencode")
-  if (which == "auto" && !check_codex()$ok) which <- "free"
-  cmd <- switch(which,
-    free = shQuote(opencode),
-    codex = shQuote(codex),
-    auto = paste0(shQuote(codex), ' || { echo; echo "Codex stopped. Switching to the free course agent."; ',
-                  shQuote(opencode), "; }"))
-  rstudioapi::terminalExecute(cmd, workingDir = getwd(), show = TRUE)
+agent <- function(which = default_agent) {
+  which <- match.arg(which, c("opencode", "codex"))
+  rstudioapi::terminalExecute(shQuote(find_tool(which)), workingDir = getwd(), show = TRUE)
   invisible(which)
 }
 
-agent_free <- function() agent("free")
+#' Open the other agent (Codex when the default is OpenCode, and the reverse).
+#' @export
+agent_other <- function() agent(setdiff(c("opencode", "codex"), default_agent))

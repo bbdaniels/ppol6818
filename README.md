@@ -22,9 +22,9 @@ The installer installs R, RStudio, Git, the GitHub command-line tool, uv, Codex,
 
 The package In RStudio it adds three entries to the Addins menu:
 
-- **Course setup** checks every sign-in the course needs (GitHub, Codex, KoboToolbox, IPUMS USA) and the course organization. When one is missing it opens the sign-up or key page, then prints a pass or fail report.
-- **Course agent** opens Codex in the Terminal, or the free agent (OpenCode) when Codex is not signed in.
-- **Course agent (free)** opens the free agent. Use it when Codex says your credits are used up.
+- **Course setup** checks every sign-in the course needs (GitHub, KoboToolbox, IPUMS USA), the course agent and the course organization. When one is missing it opens the sign-up or key page, then prints a pass or fail report.
+- **Course agent** opens OpenCode on a free GLM model in the Terminal, in the current project.
+- **Course agent (alternative)** opens Codex, which is installed as the fallback. To make Codex the course default, set `default_agent` in `R/agent.R`.
 
 Both agents can read and deploy KoboToolbox forms through `kobo-mcp`. IPUMS data is downloaded with your own key through `ipumsr`; see `inst/examples/ipums-extract.R`. IPUMS data never goes into a repository.
 

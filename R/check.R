@@ -63,17 +63,25 @@ opencode_kobo_status <- function(tries = 5) {
   list(ok = FALSE, line = if (nzchar(line)) line else "kobo not listed")
 }
 
+# The course agent works without an account; the check confirms its model.
+check_opencode <- function() {
+  f <- opencode_global_config()
+  model <- if (file.exists(f)) jsonlite::read_json(f)$model %||% "" else ""
+  list(ok = identical(model, free_model), detail = if (nzchar(model)) model else "no model set")
+}
+
+# Only the default agent must pass; the other is reported for information.
 check_kobo_agents <- function() {
   oc <- opencode_kobo_status()
   cx <- grepl("kobo", run_tool("codex", c("mcp", "list"))$out)
-  list(ok = oc$ok && cx, detail = sprintf("Codex %s; OpenCode: %s",
-                                          if (cx) "connected" else "not connected", oc$line))
+  list(ok = if (default_agent == "codex") cx else oc$ok,
+       detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
 }
 
 checks <- list(
   "Programs installed" = check_tools,
   "GitHub sign-in" = check_github,
-  "Codex sign-in" = check_codex,
+  "Course agent" = function() if (default_agent == "codex") check_codex() else check_opencode(),
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
   "Agents connected to KoboToolbox" = check_kobo_agents,

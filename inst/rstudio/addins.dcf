@@ -1,11 +1,11 @@
 Name: Course agent
-Description: Open the course AI agent (Codex, or the free OpenCode model) in the Terminal.
+Description: Open the course AI agent in the Terminal, in the current project.
 Binding: agent
 Interactive: true
 
-Name: Course agent (free)
-Description: Open the free course agent (OpenCode), for when Codex credits run out.
-Binding: agent_free
+Name: Course agent (alternative)
+Description: Open the other installed agent (Codex), for when the course agent is down or slow.
+Binding: agent_other
 Interactive: true
 
 Name: Course setup

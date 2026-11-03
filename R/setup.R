@@ -52,10 +52,10 @@ setup_github <- function() {
 }
 
 setup_codex <- function() {
-  if (check_codex()$ok) return(invisible())
+  if (default_agent != "codex" || check_codex()$ok) return(invisible())
   account_first("ChatGPT", links$chatgpt, function() {
     utils::browseURL(links$codex_students)
-    tell("Codex", "The Codex for Students page is open. Claim the offer, then click OK. If it is refused, click OK anyway: the free agent covers you.")
+    tell("Codex", "The Codex for Students page is open. Claim the offer, then click OK.")
   })
   in_terminal("codex", "login")
   wait_for(check_codex, "Codex sign-in")
