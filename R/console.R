@@ -1,14 +1,15 @@
-# The agent runs R in the student's RStudio session, through the Console,
-# exactly as if the student pressed Run: the code is echoed in the Console,
-# objects land in the Environment pane and plots in the Plots pane. The
-# agent's own R process never runs course code.
+# The agent runs R in the student's RStudio session, through the Console, as
+# if the student pressed Run: the code is echoed in the Console, objects land
+# in the Environment pane and plots in the Plots pane. The agent's own R
+# process never runs course code.
 #
 # mcptools carries each tool call into the session, where it runs while R is
 # idle at the prompt. Code sent to the Console runs only after the call
-# returns, so running is two calls: run_in_console sends the code between two
-# quiet markers, console_begin and console_done; console_output returns what
-# it printed once console_done has run. An error drops the rest of the code's
-# block, but the markers are separate Console inputs and still run.
+# returns, so running is two calls. run_in_console stores the code and sends
+# one line to the Console, ppol6818:::console_run(), which runs the code with
+# its echo; console_run's exit handler marks the run finished however it
+# ends (done, error, or the student pressing Stop). Nothing else is queued
+# behind the code: RStudio may discard queued Console input after an error.
 
 console <- new.env(parent = emptyenv())
 
@@ -21,47 +22,52 @@ console_attach <- function() {
   invisible()
 }
 
-# The first quiet marker, run by the Console itself. Handlers that record
-# messages, warnings and errors for console_output (which go to the Console's
-# error stream, not into the capture) can only be registered at top level:
-# RStudio reads .Rprofile, and runs tool calls, with handlers on the stack.
-console_begin <- function() {
-  if (!isTRUE(console$handlers)) {
-    globalCallingHandlers(
-      message = function(m) console_note("Message", conditionMessage(m)),
-      warning = function(w) console_note("Warning", conditionMessage(w)),
-      error = function(e) console_note("Error", conditionMessage(e)))
-    console$handlers <- TRUE
-  }
-  sink(console$file, split = TRUE)
-  console$sinks <- sink.number()
-  console$running <- TRUE
-  invisible()
-}
-
-console_note <- function(kind, text) {
-  if (isTRUE(console$running)) console$notes <- c(console$notes, paste0(kind, ": ", sub("\n$", "", text)))
-}
-
 run_in_console <- function(code) {
   if (!rstudioapi::isAvailable())
     stop("Not connected to RStudio. Call list_r_sessions, then select_r_session with the RStudio session for this project, and try again.")
   if (isTRUE(console$active))
     return("Earlier code is still running in the Console. Call console_output until it finishes, then send this code again.")
+  parsed <- tryCatch(parse(text = code, keep.source = TRUE), error = function(e) e)
+  if (inherits(parsed, "error"))
+    return(paste("The code was not run: it does not parse.", conditionMessage(parsed)))
+  console$code <- parsed
   console$file <- tempfile(fileext = ".txt")
   console$notes <- character()
   console$active <- TRUE
-  rstudioapi::sendToConsole("ppol6818:::console_begin()", execute = TRUE, echo = FALSE, focus = FALSE)
-  rstudioapi::sendToConsole(code, execute = TRUE, echo = TRUE, focus = FALSE)
-  rstudioapi::sendToConsole("ppol6818:::console_done()", execute = TRUE, echo = FALSE, focus = FALSE)
+  rstudioapi::sendToConsole("ppol6818:::console_run()", execute = TRUE, echo = FALSE, focus = FALSE)
   "Sent to the RStudio Console. Call console_output to get what it printed."
 }
 
-# The quiet marker behind the agent's code: the code has finished.
-console_done <- function() {
-  while (sink.number() >= (console$sinks %||% 1L)) sink()
-  console$running <- FALSE
-  console$active <- FALSE
+# Runs the code the agent sent, at the Console; run_in_console sends this call.
+console_run <- function() {
+  if (!isTRUE(console$active) || is.null(console$code)) return(invisible())
+  code <- console$code
+  console$code <- NULL
+  devices <- grDevices::dev.list()
+  failed <- FALSE
+  sink(console$file, split = TRUE)
+  n <- sink.number()
+  on.exit({
+    while (sink.number() >= n) sink()
+    # A file device (pdf, png) the code opened before failing would catch
+    # every later plot, so none would reach the Plots pane.
+    now <- grDevices::dev.list()
+    left <- now[!now %in% devices]
+    if (failed && length(left)) {
+      for (d in left) grDevices::dev.off(d)
+      console$notes <- c(console$notes, paste("Closed the graphics device the code left open:", paste(names(left), collapse = ", ")))
+    }
+    console$active <- FALSE
+  }, add = TRUE)
+  note <- function(kind) function(cnd) {
+    if (kind == "Error") failed <<- TRUE
+    console$notes <- c(console$notes, paste0(kind, ": ", sub("\n$", "", conditionMessage(cnd))))
+  }
+  withCallingHandlers(
+    source(exprs = code, local = globalenv(), echo = TRUE, print.eval = TRUE,
+           spaced = FALSE, max.deparse.length = Inf, keep.source = TRUE,
+           prompt.echo = "> ", continue.echo = "+ "),
+    message = note("Message"), warning = note("Warning"), error = note("Error"))
   invisible()
 }
 
