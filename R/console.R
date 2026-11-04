@@ -31,10 +31,11 @@ run_in_console <- function(code) {
   if (inherits(parsed, "error"))
     return(paste("The code was not run: it does not parse.", conditionMessage(parsed)))
   console$code <- parsed
+  console$text <- code
   console$file <- tempfile(fileext = ".txt")
   console$notes <- character()
   console$active <- TRUE
-  rstudioapi::sendToConsole("ppol6818:::console_run()", execute = TRUE, echo = FALSE, focus = FALSE)
+  rstudioapi::sendToConsole(console_call, execute = TRUE, echo = FALSE, focus = FALSE)
   "Sent to the RStudio Console. Call console_output to get what it printed."
 }
 
@@ -57,6 +58,7 @@ console_run <- function() {
       for (d in left) grDevices::dev.off(d)
       console$notes <- c(console$notes, paste("Closed the graphics device the code left open:", paste(names(left), collapse = ", ")))
     }
+    history_replace(console$text)
     console$active <- FALSE
   }, add = TRUE)
   note <- function(kind) function(cnd) {
@@ -68,6 +70,21 @@ console_run <- function() {
            spaced = FALSE, max.deparse.length = Inf, keep.source = TRUE,
            prompt.echo = "> ", continue.echo = "+ "),
     message = note("Message"), warning = note("Warning"), error = note("Error"))
+  invisible()
+}
+
+# In the History pane, the agent's code takes the place of the one line that
+# ran it, so History reads as if the student had pressed Run on that code.
+console_call <- "ppol6818:::console_run()"
+history_replace <- function(text) {
+  h <- tempfile()
+  on.exit(unlink(h))
+  if (!isTRUE(tryCatch({ utils::savehistory(h); TRUE }, error = function(e) FALSE))) return(invisible())
+  x <- readLines(h, warn = FALSE)
+  i <- utils::tail(which(x == console_call), 1)
+  if (length(i)) x <- x[-i]
+  writeLines(c(x, strsplit(text, "\n", fixed = TRUE)[[1]]), h)
+  utils::loadhistory(h)
   invisible()
 }
 
@@ -84,15 +101,21 @@ console_output <- function() {
   out
 }
 
+# mcptools sends each tool's function from the agent's server into the
+# session. These wrappers only call the package installed in the session, so
+# an updated package takes effect when R restarts, without restarting the agent.
 console_tools <- function() {
+  run <- function(code) ppol6818:::run_in_console(code)
+  output <- function() ppol6818:::console_output()
+  environment(run) <- environment(output) <- baseenv()
   list(
-    ellmer::tool(run_in_console, name = "run_in_console",
+    ellmer::tool(run, name = "run_in_console",
       description = paste(
         "Run R code in the student's RStudio session through the Console, as if the student pressed Run:",
         "the code is echoed in the Console, objects appear in the Environment pane and plots in the Plots pane.",
         "This is the only way to run R for this course. Then call console_output to read the result."),
       arguments = list(code = ellmer::type_string("The R code to run."))),
-    ellmer::tool(console_output, name = "console_output",
+    ellmer::tool(output, name = "console_output",
       description = paste(
         "Return what the code last sent with run_in_console printed in the Console, with any messages, warnings and errors.",
         "If it says the code is still running, call it again."),
