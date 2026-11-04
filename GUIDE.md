@@ -41,6 +41,7 @@ PPOL 6818 setup check
   KoboToolbox key                    PASS
   IPUMS key                          PASS
   Agents connected to KoboToolbox    PASS
+  Agents connected to RStudio        PASS
   Course organization                WAIT  not invited yet
 ```
 
@@ -52,7 +53,7 @@ After we invite you, open the `ppol-6818` project in RStudio again (File, Recent
 
 ## Working with the agents
 
-Click **Addins > Course agent** to open the course agent (OpenCode, on a free model) in RStudio's Terminal, in the project you have open. It needs no account. Ask it in plain English to write, run and check code. The agent reads the course rules from the file `AGENTS.md` in each repository: it writes code and shows you evidence that it worked, and it does not write the prose you submit.
+The course agent (OpenCode, on a free model) opens in RStudio's Terminal every time RStudio opens the course folder. If you close it, click **Addins > Course agent** to open it again, in the project you have open. It needs no account. Ask it in plain English to write, run and check code. It runs its code in RStudio's Console, as if you had pressed Run: you see the code and what it prints in the Console, the objects it makes in the Environment pane and its plots in the Plots pane. The agent reads the course rules from the file `AGENTS.md` in each repository: it writes code and shows you evidence that it worked, and it does not write the prose you submit.
 
 The installer also installs Codex, a second agent. If we switch the course to Codex during the semester, we will tell you, and setup will ask you to sign in to it.
 

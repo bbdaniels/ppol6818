@@ -134,6 +134,7 @@ setup <- function() {
   setup_kobo()
   setup_ipums()
   setup_kobo_agents()
+  setup_console_agents()
   opencode_set_model()
   sync_course()
   invisible(check())

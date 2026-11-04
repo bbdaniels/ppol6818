@@ -81,8 +81,9 @@ check_course <- function() {
 }
 
 # Run when the course project opens: full setup until it has passed once,
-# then only the quick invitation and repository sync.
-on_open <- function() {
+# then only the quick invitation and repository sync; then run.R opens in
+# the editor and the course agent in the Terminal below it.
+on_open <- function(newSession = TRUE) {
   done <- state_file("setup-passed")
   if (!file.exists(done)) {
     res <- setup()
@@ -90,6 +91,7 @@ on_open <- function() {
   } else {
     sync_course()
   }
+  open_workspace(newSession)
   invisible()
 }
 

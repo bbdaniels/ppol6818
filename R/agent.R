@@ -36,6 +36,18 @@ agent <- function(which = default_agent) {
   invisible(which)
 }
 
+# The working layout when RStudio opens a course project: the project's run.R
+# in the editor above, the course agent in the Terminal below. Only on a
+# fresh RStudio session: after an R restart the earlier Terminal is still
+# running the agent.
+open_workspace <- function(newSession = TRUE) {
+  if (!isTRUE(newSession) || !rstudioapi::isAvailable()) return(invisible())
+  if (file.exists("run.R")) rstudioapi::navigateToFile("run.R")
+  if (!nzchar(find_tool(default_agent))) return(invisible())
+  if (default_agent == "codex" && !isTRUE(check_codex()$ok)) return(invisible())
+  agent()
+}
+
 #' Open the other agent (Codex when the default is OpenCode, and the reverse).
 #' @export
 agent_other <- function() agent(setdiff(c("opencode", "codex"), default_agent))

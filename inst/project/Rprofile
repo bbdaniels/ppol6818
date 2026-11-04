@@ -1,9 +1,12 @@
 # PPOL 6818 course project: load the course keys (KoboToolbox, IPUMS) in
 # every session, including Rscript runs; when RStudio opens the project,
 # finish setup the first time, and afterwards accept course invitations and
-# clone new course repositories.
+# clone new course repositories; then open the course agent. The
+# course agent runs its R code in this session, through the Console.
 if (requireNamespace("ppol6818", quietly = TRUE)) {
   ppol6818::load_keys()
-  if (interactive())
-    setHook("rstudio.sessionInit", function(newSession) ppol6818::on_open(), action = "append")
+  if (interactive()) {
+    ppol6818::console_attach()
+    setHook("rstudio.sessionInit", function(newSession) ppol6818::on_open(newSession), action = "append")
+  }
 }

@@ -54,15 +54,15 @@ check_ipums <- function() {
 
 # OpenCode reports live status from its background service, which needs a
 # few seconds to reconnect after setup rewrites its configuration.
-opencode_kobo_status <- function(tries = 5) {
+opencode_mcp_status <- function(name = "kobo", tries = 5) {
   line <- ""
   for (i in seq_len(tries)) {
     out <- strsplit(run_tool("opencode", c("mcp", "list"))$out, "\n")[[1]]
-    line <- trimws(grep("kobo", out, value = TRUE)[1] %||% "")
+    line <- trimws(grep(name, out, value = TRUE)[1] %||% "")
     if (grepl("connected", line) && !grepl("not connected|fail", line, ignore.case = TRUE)) return(list(ok = TRUE, line = line))
     Sys.sleep(3)
   }
-  list(ok = FALSE, line = if (nzchar(line)) line else "kobo not listed")
+  list(ok = FALSE, line = if (nzchar(line)) line else paste(name, "not listed"))
 }
 
 # The course agent works without an account; the check confirms its model.
@@ -74,8 +74,16 @@ check_opencode <- function() {
 
 # Only the default agent must pass; the other is reported for information.
 check_kobo_agents <- function() {
-  oc <- opencode_kobo_status()
+  oc <- opencode_mcp_status("kobo")
   cx <- grepl("kobo", run_tool("codex", c("mcp", "list"))$out)
+  list(ok = if (default_agent == "codex") cx else oc$ok,
+       detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
+}
+
+# The connector that lets the agent run code in the RStudio session.
+check_console_agents <- function() {
+  oc <- opencode_mcp_status("rstudio")
+  cx <- grepl("rstudio", run_tool("codex", c("mcp", "list"))$out)
   list(ok = if (default_agent == "codex") cx else oc$ok,
        detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
 }
@@ -95,6 +103,7 @@ checks <- list(
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
   "Agents connected to KoboToolbox" = check_kobo_agents,
+  "Agents connected to RStudio" = check_console_agents,
   "Course organization" = function() check_course()
 )
 

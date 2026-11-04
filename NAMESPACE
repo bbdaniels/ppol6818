@@ -1,5 +1,7 @@
 export(setup)
 export(check)
+export(console_attach)
+export(console_server)
 export(agent)
 export(agent_other)
 export(sync_course)
