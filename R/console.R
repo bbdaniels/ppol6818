@@ -35,6 +35,7 @@ run_in_console <- function(code) {
   console$file <- tempfile(fileext = ".txt")
   console$notes <- character()
   console$active <- TRUE
+  console$sent <- Sys.time()
   rstudioapi::sendToConsole(console_call, execute = TRUE, echo = FALSE, focus = FALSE)
   "Sent to the RStudio Console. Call console_output to get what it printed."
 }
@@ -90,7 +91,21 @@ history_replace <- function(text) {
 
 console_output <- function() {
   if (is.null(console$file)) return("Nothing has been sent to the Console.")
-  if (isTRUE(console$active)) return("Still running in the Console. Call console_output again in a few seconds.")
+  if (isTRUE(console$active)) {
+    # This call runs only while R is idle at the prompt. So if console_run has
+    # started (it took the code), it has ended; if it has not started after a
+    # while, RStudio dropped it. Either way the run is over, never stuck.
+    if (!is.null(console$code) && difftime(Sys.time(), console$sent, units = "secs") < 10)
+      return("Still running in the Console. Call console_output again in a few seconds.")
+    dropped <- !is.null(console$code)
+    console$code <- NULL
+    console$active <- FALSE
+    if (dropped) {
+      unlink(console$file)
+      console$file <- NULL
+      return("RStudio did not run the code (the Console was busy). Send it again with run_in_console.")
+    }
+  }
   out <- readLines(console$file, warn = FALSE)
   unlink(console$file)
   console$file <- NULL

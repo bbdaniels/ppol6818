@@ -136,6 +136,9 @@ setup <- function() {
   setup_kobo_agents()
   setup_console_agents()
   opencode_set_model()
+  # OpenCode's background service keeps each connector's process running
+  # with the package code it started with; restart it so they start afresh.
+  run_tool("opencode", c("service", "restart"))
   sync_course()
   invisible(check())
 }
