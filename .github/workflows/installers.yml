@@ -13,6 +13,12 @@ jobs:
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
+      # Students have no compiler tools; the test machine comes with Rtools,
+      # which hid a failure to install the course package (2026-11-05).
+      - name: Hide Rtools
+        shell: powershell
+        run: |
+          Get-ChildItem C:\ -Directory -Filter "rtools*" | ForEach-Object { Write-Host "Hiding $($_.FullName)"; Rename-Item $_.FullName "$($_.Name)-hidden" }
       - name: Install
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File install/install-windows.ps1
