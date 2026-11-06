@@ -16,7 +16,7 @@ kobo_server <- function() {
 }
 
 check_tools <- function() {
-  need <- c("git", "gh", "codex", "opencode", "uvx")
+  need <- c("git", "gh", "codex", "opencode")
   missing <- need[!nzchar(vapply(need, find_tool, ""))]
   if (length(missing)) list(ok = FALSE, detail = paste("missing:", paste(missing, collapse = ", ")))
   else list(ok = TRUE, detail = paste(need, collapse = ", "))
@@ -54,7 +54,7 @@ check_ipums <- function() {
 
 # OpenCode reports live status from its background service, which needs a
 # few seconds to reconnect after setup rewrites its configuration.
-opencode_mcp_status <- function(name = "kobo", tries = 5) {
+opencode_mcp_status <- function(name, tries = 5) {
   line <- ""
   for (i in seq_len(tries)) {
     out <- strsplit(run_tool("opencode", c("mcp", "list"))$out, "\n")[[1]]
@@ -70,14 +70,6 @@ check_opencode <- function() {
   f <- opencode_global_config()
   model <- if (file.exists(f)) jsonlite::read_json(f)$model %||% "" else ""
   list(ok = identical(model, free_model), detail = if (nzchar(model)) model else "no model set")
-}
-
-# Only the default agent must pass; the other is reported for information.
-check_kobo_agents <- function() {
-  oc <- opencode_mcp_status("kobo")
-  cx <- grepl("kobo", run_tool("codex", c("mcp", "list"))$out)
-  list(ok = if (default_agent == "codex") cx else oc$ok,
-       detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
 }
 
 # The connector that lets the agent run code in the RStudio session.
@@ -102,7 +94,6 @@ checks <- list(
   "Course agent" = function() if (default_agent == "codex") check_codex() else check_opencode(),
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
-  "Agents connected to KoboToolbox" = check_kobo_agents,
   "Agents connected to RStudio" = check_console_agents,
   "Course organization" = function() check_course()
 )

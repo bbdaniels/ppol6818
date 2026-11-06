@@ -40,7 +40,6 @@ PPOL 6818 setup check
   Course agent                       PASS
   KoboToolbox key                    PASS
   IPUMS key                          PASS
-  Agents connected to KoboToolbox    PASS
   Agents connected to RStudio        PASS
   Course organization                WAIT  not invited yet
 ```

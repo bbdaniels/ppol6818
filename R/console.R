@@ -128,7 +128,9 @@ console_tools <- function() {
       description = paste(
         "Run R code in the student's RStudio session through the Console, as if the student pressed Run:",
         "the code is echoed in the Console, objects appear in the Environment pane and plots in the Plots pane.",
-        "This is the only way to run R for this course. Then call console_output to read the result."),
+        "This is the only way to run R for this course. Then call console_output to read the result.",
+        "KoboToolbox is reached from R through the course package's kobo_* functions (forms, deploy, replace, submissions, export);",
+        "run kobo_help() first to see them and their workflows."),
       arguments = list(code = ellmer::type_string("The R code to run."))),
     ellmer::tool(output, name = "console_output",
       description = paste(

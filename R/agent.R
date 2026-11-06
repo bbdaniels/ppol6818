@@ -10,11 +10,18 @@ opencode_global_config <- function() {
   file.path(Sys.getenv("XDG_CONFIG_HOME", file.path(home_dir(), ".config")), "opencode", "opencode.json")
 }
 
-opencode_set_kobo <- function(uvx, tok) {
-  run_tool("opencode", c("mcp", "add", "kobo", "--global",
-                         "--env", paste0("KOBO_API_TOKEN=", tok),
-                         "--env", paste0("KOBO_SERVER=", kobo_server()),
-                         "--", uvx, "kobo-mcp"))
+# Earlier course setups registered the kobo-mcp connector with both agents,
+# with the KoboToolbox key in their configuration files. The kobo_*
+# functions replace it; remove the entry and the key it holds.
+remove_kobo_connector <- function() {
+  run_tool("codex", c("mcp", "remove", "kobo"))
+  f <- opencode_global_config()
+  if (!file.exists(f)) return(invisible())
+  cfg <- jsonlite::read_json(f)
+  if (is.null(cfg$mcp$servers$kobo) && is.null(cfg$mcp$kobo)) return(invisible())
+  cfg$mcp$servers$kobo <- NULL
+  cfg$mcp$kobo <- NULL
+  jsonlite::write_json(cfg, f, auto_unbox = TRUE, pretty = TRUE)
 }
 
 # The free model is the default for OpenCode everywhere, not per project.

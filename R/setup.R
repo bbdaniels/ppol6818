@@ -102,22 +102,6 @@ setup_ipums <- function() {
   }
 }
 
-# Register the KoboToolbox connector with both agents, using the key in
-# the course folder's .Renviron. Rerunning replaces the old entry, so a new key propagates.
-setup_kobo_agents <- function() {
-  tok <- Sys.getenv("KOBO_API_TOKEN")
-  if (!nzchar(tok)) return(invisible())
-  uvx <- find_tool("uvx")
-  # Download the connector now: on a first launch the agent would otherwise
-  # start before the download finishes and run without the Kobo tools.
-  run_tool("uvx", c("--refresh-package", "kobo-mcp", "--from", "kobo-mcp", "python", "-c", "pass"), timeout = 300)
-  env <-c("--env", paste0("KOBO_API_TOKEN=", tok), "--env", paste0("KOBO_SERVER=", kobo_server()))
-  run_tool("codex", c("mcp", "remove", "kobo"))
-  run_tool("codex", c("mcp", "add", "kobo", env, "--", uvx, "kobo-mcp"))
-  opencode_set_kobo(uvx, tok)
-  invisible()
-}
-
 #' Set up everything the course needs, fixing whatever is missing, then
 #' print the pass or fail report. Safe to rerun at any time.
 #' @export
@@ -133,7 +117,7 @@ setup <- function() {
   setup_codex()
   setup_kobo()
   setup_ipums()
-  setup_kobo_agents()
+  remove_kobo_connector()
   setup_console_agents()
   opencode_set_model()
   # OpenCode's background service keeps each connector's process running
