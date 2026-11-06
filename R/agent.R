@@ -58,3 +58,28 @@ open_workspace <- function(newSession = TRUE) {
 #' Open the other agent (Codex when the default is OpenCode, and the reverse).
 #' @export
 agent_other <- function() agent(setdiff(c("opencode", "codex"), default_agent))
+# OpenCode's background service, which every opencode command works through,
+# keeps running after the agent that started it is gone, and any opencode
+# command starts it again when it is not running. So an RStudio session stops
+# it when it ends, unless an OpenCode agent is still running: an R restart
+# keeps the RStudio Terminal, and the agent in it, which still needs it.
+session_end <- new.env()
+.onLoad <- function(libname, pkgname) {
+  if (interactive()) reg.finalizer(session_end, function(e) stop_idle_opencode(), onexit = TRUE)
+}
+# How many OpenCode processes other than its service are running.
+opencode_clients <- function() {
+  if (.Platform$OS.type == "windows") {
+    out <- suppressWarnings(system2("tasklist", c("/FI", shQuote("IMAGENAME eq opencode.exe", type = "cmd"), "/FO", "CSV", "/NH"),
+                                    stdout = TRUE, stderr = FALSE))
+    return(max(sum(grepl("^\"opencode\\.exe\"", out, ignore.case = TRUE)) - 1L, 0L))  # one is the service
+  }
+  out <- suppressWarnings(system2("ps", c("-axo", "command="), stdout = TRUE, stderr = FALSE))
+  sum(grepl("(^|/)opencode( |$)", out) & !grepl("opencode serve", out, fixed = TRUE))
+}
+stop_idle_opencode <- function() {
+  if (!nzchar(find_tool("opencode"))) return(invisible())
+  tryCatch(if (opencode_clients() == 0) run_tool("opencode", c("service", "stop"), timeout = 15),
+           error = function(e) NULL)
+  invisible()
+}
