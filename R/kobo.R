@@ -2,7 +2,7 @@
 # the RStudio Console like any other R code, and students can call them too.
 # They replace the kobo-mcp connector (github.com/bbdaniels/kobo-mcp), whose
 # ten tools they port one for one, so the course needs no Python and no
-# connector registered with each agent. The key is KOBO_API_TOKEN, which the
+# connector registered with Codex. The key is KOBO_API_TOKEN, which the
 # course project loads from the course folder's .Renviron.
 
 xlsx_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

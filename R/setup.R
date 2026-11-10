@@ -54,7 +54,7 @@ setup_github <- function() {
 }
 
 setup_codex <- function() {
-  if (default_agent != "codex" || check_codex()$ok) return(invisible())
+  if (check_codex()$ok) return(invisible())
   account_first("ChatGPT", links$chatgpt, function() {
     utils::browseURL(links$codex_students)
     tell("Codex", "The Codex for Students page is open. Claim the offer, then click OK.")
@@ -86,16 +86,16 @@ setup_kobo <- function() {
 }
 
 setup_ipums <- function() {
-  if (check_ipums()$ok) return(invisible())
-  if (grepl("not registered", check_ipums()$detail)) {
-    utils::browseURL(links$ipums_signup)
-    return(tell("IPUMS USA", "Your key works, but your IPUMS account is not yet registered for IPUMS USA. Fill in the USA registration page now open, then rerun Course setup once IPUMS approves it."))
+  r <- check_ipums()
+  if (r$ok) return(invisible())
+  if (!grepl("not registered", r$detail)) {
+    account_first("IPUMS USA", links$ipums_signup)
+    utils::browseURL(links$ipums_keys)
+    key <- secret("On the IPUMS page now open, sign in, create an API key, copy it, and paste it here")
+    if (nzchar(key)) renviron_set("IPUMS_API_KEY", key)
+    r <- check_ipums()
   }
-  account_first("IPUMS USA", links$ipums_signup)
-  utils::browseURL(links$ipums_keys)
-  key <- secret("On the IPUMS page now open, sign in, create an API key, copy it, and paste it here")
-  if (nzchar(key)) renviron_set("IPUMS_API_KEY", key)
-  if (grepl("not registered", check_ipums()$detail)) {
+  if (grepl("not registered", r$detail)) {
     utils::browseURL(links$ipums_signup)
     tell("IPUMS USA", paste("Your key works, but your IPUMS account is not yet registered for IPUMS USA.",
                             "Fill in the USA registration page now open, then rerun Course setup once IPUMS approves it."))
@@ -106,8 +106,9 @@ setup_ipums <- function() {
 #' print the pass or fail report. Safe to rerun at any time.
 #' @export
 setup <- function() {
-  if (!check_tools()$ok) {
-    tell("Programs missing", paste(check_tools()$detail,
+  tools <- check_tools()
+  if (!tools$ok) {
+    tell("Programs missing", paste(tools$detail,
          "\nRun the course installer again (see Canvas), then click Addins > Course setup."))
     return(invisible(check()))
   }
@@ -117,12 +118,7 @@ setup <- function() {
   setup_codex()
   setup_kobo()
   setup_ipums()
-  remove_kobo_connector()
-  setup_console_agents()
-  opencode_set_model()
-  # OpenCode's background service keeps each connector's process running
-  # with the package code it started with; restart it so they start afresh.
-  run_tool("opencode", c("service", "restart"))
+  setup_console_agent()
   sync_course()
   invisible(check())
 }

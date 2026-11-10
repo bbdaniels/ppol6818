@@ -11,8 +11,6 @@ stopifnot(file.exists(file.path(got, "ppol-6818.Rproj")), file.exists(file.path(
 stopifnot(!ppol6818:::synced_folder(got))
 if (.Platform$OS.type == "windows") {
   stopifnot(!grepl("Documents", got, fixed = TRUE))
-  stopifnot(startsWith(tolower(ppol6818:::opencode_global_config()),
-                       tolower(file.path(home, ".config"))))
 }
 # Keys written by setup land in the course folder and load in a course repository.
 ppol6818:::renviron_set("IPUMS_API_KEY", "test-key")

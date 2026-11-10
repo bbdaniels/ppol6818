@@ -1,11 +1,6 @@
 Name: Course agent
-Description: Open the course AI agent in the Terminal, in the current project.
+Description: Open Codex, the course AI agent, in the Terminal, in the current project.
 Binding: agent
-Interactive: true
-
-Name: Course agent (alternative)
-Description: Open the other installed agent (Codex), for when the course agent is down or slow.
-Binding: agent_other
 Interactive: true
 
 Name: Course setup

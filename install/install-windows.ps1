@@ -2,8 +2,8 @@
 #
 #   powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
 #
-# It installs R, RStudio, Git, the GitHub command-line tool, Codex and
-# OpenCode with winget, installs the course R package, creates the course
+# It installs R, RStudio, Git, the GitHub command-line tool and Codex with
+# winget, installs the course R package, creates the course
 # folder, and opens it in RStudio, where course setup continues.
 # It is safe to run again: anything already installed is kept.
 
@@ -74,19 +74,6 @@ foreach ($id in $packages.Keys) {
   Say "Installing $($packages[$id])"
   winget install --id $id -e --silent --accept-source-agreements --accept-package-agreements
 }
-Refresh-Path
-
-# OpenCode 2 ships its installer as a shell script; Git for Windows provides the shell.
-$opencode = Join-Path $HOME ".opencode\bin\opencode.exe"
-if (Test-Path $opencode) {
-  Write-Host "OpenCode is already installed."
-} else {
-  Say "Installing OpenCode"
-  & "C:\Program Files\Git\bin\bash.exe" -lc "curl -fsSL https://opencode.ai/v2/install | bash"
-}
-$ocBin = Join-Path $HOME ".opencode\bin"
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$ocBin*") { [Environment]::SetEnvironmentVariable("Path", "$userPath;$ocBin", "User") }
 Refresh-Path
 
 $rscript = Get-ChildItem "C:\Program Files\R\R-*\bin\Rscript.exe" | Sort-Object FullName | Select-Object -Last 1

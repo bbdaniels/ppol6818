@@ -4,9 +4,9 @@ Version: 0.1.0
 Authors@R: person("Benjamin", "Daniels", role = c("aut", "cre"), email = "bd581@georgetown.edu")
 Description: Checks a student's sign-ins for GitHub, Codex, KoboToolbox and
     IPUMS, sends the student to the right sign-up or key page when one is
-    missing, connects the course AI agents to the student's RStudio session,
-    opens the agent inside RStudio, and reads and deploys KoboToolbox forms
-    from R.
+    missing, connects Codex, the course AI agent, to the student's RStudio
+    session, opens it inside RStudio, and reads and deploys KoboToolbox
+    forms from R.
 License: MIT
 Encoding: UTF-8
 Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, ellmer, writexl

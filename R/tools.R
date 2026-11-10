@@ -3,7 +3,7 @@
 # user folder is often missing from PATH here; look in the install folders too.
 
 # The user's home folder. On Windows, R's "~" is the Documents folder, which
-# OneDrive often syncs; programs such as OpenCode use USERPROFILE instead.
+# OneDrive often syncs; command-line programs such as Codex use USERPROFILE.
 home_dir <- function() {
   if (.Platform$OS.type == "windows" && nzchar(Sys.getenv("USERPROFILE")))
     normalizePath(Sys.getenv("USERPROFILE"), winslash = "/", mustWork = FALSE)
@@ -27,9 +27,7 @@ synced_folder <- function(d) {
 
 tool_dirs <- function() {
   home <- home_dir()
-  c(file.path(home, ".opencode", "bin"),
-    file.path(home, ".local", "bin"),
-    file.path(home, ".cargo", "bin"),
+  c(file.path(home, ".local", "bin"),
     "/opt/homebrew/bin", "/usr/local/bin",
     file.path(Sys.getenv("LOCALAPPDATA"), "Programs"),
     file.path(Sys.getenv("APPDATA"), "npm"),

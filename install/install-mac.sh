@@ -3,8 +3,8 @@
 #
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-mac.sh)"
 #
-# It installs R, RStudio, Git, the GitHub command-line tool, Codex and
-# OpenCode, installs the course R package, creates the course folder
+# It installs R, RStudio, Git, the GitHub command-line tool and Codex,
+# installs the course R package, creates the course folder
 # ~/Projects/ppol-6818, and opens it in RStudio, where course setup continues.
 # It is safe to run again: anything already installed is kept.
 
@@ -41,8 +41,8 @@ if ! command -v brew >/dev/null 2>&1; then
   grep -q 'brew shellenv' "$HOME/.zprofile" 2>/dev/null || echo "eval \"\$($(command -v brew) shellenv)\"" >> "$HOME/.zprofile"
 fi
 
-say "Installing command-line tools: Git, GitHub CLI, OpenCode"
-brew install git gh opencode
+say "Installing command-line tools: Git, GitHub CLI"
+brew install git gh
 
 if [ -d /Library/Frameworks/R.framework ] || command -v R >/dev/null 2>&1; then
   echo "R is already installed."

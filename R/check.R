@@ -16,7 +16,7 @@ kobo_server <- function() {
 }
 
 check_tools <- function() {
-  need <- c("git", "gh", "codex", "opencode")
+  need <- c("git", "gh", "codex")
   missing <- need[!nzchar(vapply(need, find_tool, ""))]
   if (length(missing)) list(ok = FALSE, detail = paste("missing:", paste(missing, collapse = ", ")))
   else list(ok = TRUE, detail = paste(need, collapse = ", "))
@@ -52,32 +52,10 @@ check_ipums <- function() {
   list(ok = TRUE, detail = "key works")
 }
 
-# OpenCode reports live status from its background service, which needs a
-# few seconds to reconnect after setup rewrites its configuration.
-opencode_mcp_status <- function(name, tries = 5) {
-  line <- ""
-  for (i in seq_len(tries)) {
-    out <- strsplit(run_tool("opencode", c("mcp", "list"))$out, "\n")[[1]]
-    line <- trimws(grep(name, out, value = TRUE)[1] %||% "")
-    if (grepl("connected", line) && !grepl("not connected|fail", line, ignore.case = TRUE)) return(list(ok = TRUE, line = line))
-    Sys.sleep(3)
-  }
-  list(ok = FALSE, line = if (nzchar(line)) line else paste(name, "not listed"))
-}
-
-# The course agent works without an account; the check confirms its model.
-check_opencode <- function() {
-  f <- opencode_global_config()
-  model <- if (file.exists(f)) jsonlite::read_json(f)$model %||% "" else ""
-  list(ok = identical(model, free_model), detail = if (nzchar(model)) model else "no model set")
-}
-
-# The connector that lets the agent run code in the RStudio session.
-check_console_agents <- function() {
-  oc <- opencode_mcp_status("rstudio")
-  cx <- grepl("rstudio", run_tool("codex", c("mcp", "list"))$out)
-  list(ok = if (default_agent == "codex") cx else oc$ok,
-       detail = sprintf("OpenCode: %s; Codex %s", oc$line, if (cx) "connected" else "not connected"))
+# The connector that lets Codex run code in the RStudio session.
+check_console_agent <- function() {
+  ok <- grepl("rstudio", run_tool("codex", c("mcp", "list"))$out)
+  list(ok = ok, detail = if (ok) "rstudio connector set up" else "rstudio connector missing")
 }
 
 check_folder <- function() {
@@ -87,14 +65,16 @@ check_folder <- function() {
   list(ok = TRUE, detail = d)
 }
 
+# Built when the package installs, before R/course.R defines check_course,
+# hence the wrapper for it.
 checks <- list(
   "Programs installed" = check_tools,
   "Course folder" = check_folder,
   "GitHub sign-in" = check_github,
-  "Course agent" = function() if (default_agent == "codex") check_codex() else check_opencode(),
+  "Codex sign-in" = check_codex,
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
-  "Agents connected to RStudio" = check_console_agents,
+  "Codex connected to RStudio" = check_console_agent,
   "Course organization" = function() check_course()
 )
 
