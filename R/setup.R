@@ -55,10 +55,19 @@ setup_github <- function() {
 
 setup_codex <- function() {
   if (check_codex()$ok) return(invisible())
-  account_first("ChatGPT", links$chatgpt, function() {
+  account_first("ChatGPT", links$chatgpt)
+  if (!isTRUE(ask("ChatGPT", "Does your ChatGPT account have a Plus or Pro subscription?"))) {
+    utils::browseURL(links$chatgpt_pricing)
+    tell("ChatGPT", paste("The ChatGPT pricing page is open. The course requires ChatGPT Plus ($20 a month),",
+                          "which includes Codex in RStudio. Subscribe on the account you will use all semester,",
+                          "then click OK."))
+  }
+  if (!isTRUE(ask("Codex", "Have you claimed Codex for Students on this account?"))) {
     utils::browseURL(links$codex_students)
-    tell("Codex", "The Codex for Students page is open. Claim the offer, then click OK.")
-  })
+    tell("Codex", paste("The Codex for Students page is open. Claim it with your Georgetown email on the same",
+                        "ChatGPT account: it adds $100 of extra Codex usage for when you reach Plus's limits.",
+                        "The verification cannot be moved to another account. Click OK when done."))
+  }
   in_terminal("codex", "login")
   wait_for(check_codex, "Codex sign-in")
 }

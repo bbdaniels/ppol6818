@@ -4,6 +4,7 @@ links <- list(
   github_signup = "https://github.com/signup",
   github_education = "https://github.com/settings/education/benefits",
   chatgpt = "https://chatgpt.com",
+  chatgpt_pricing = "https://chatgpt.com/pricing",
   codex_students = "https://chatgpt.com/codex/students",
   ipums_signup = "https://uma.pop.umn.edu/usa/user/new",
   ipums_keys = "https://account.ipums.org/api_keys",

@@ -7,7 +7,7 @@ You will do all of your coding for this course in RStudio, with an AI coding age
 Use your personal email address for each one, so that you keep the accounts after you leave Georgetown.
 
 - **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and setup works before it arrives.
-- **ChatGPT** (https://chatgpt.com), with a subscription that includes Codex, the course's AI coding agent. The course requires one.
+- **ChatGPT** (https://chatgpt.com), with a ChatGPT Plus subscription ($20 a month, https://chatgpt.com/pricing), which includes Codex, the course's AI coding agent. The course requires Plus from the first class. Then claim Codex for Students (https://chatgpt.com/codex/students) on the same account, verifying with your Georgetown email: it adds $100 of extra Codex usage for when you reach Plus's limits. The verification cannot be moved to another account, so use the one you will keep.
 - **IPUMS USA** (https://uma.pop.umn.edu/usa/user/new). Approval usually arrives by email within a day.
 - **KoboToolbox** (https://kf.kobotoolbox.org/accounts/signup/), on the global server.
 
