@@ -1,18 +1,58 @@
-# The course agent: Codex, in RStudio's Terminal.
+# The course agent, in RStudio's Terminal. Each student uses the agent their
+# own subscription runs: Codex with ChatGPT Plus, or Claude Code with Claude
+# Pro. The installer installs both programs; setup asks which subscription the
+# student has and signs that agent in.
 
-#' Open Codex, the course AI agent, in RStudio's Terminal, in the current project.
+agents <- list(
+  codex = list(name = "Codex", account = "ChatGPT", plan = "ChatGPT Plus", login = "login"),
+  claude = list(name = "Claude Code", account = "Claude", plan = "Claude Pro", login = c("auth", "login"))
+)
+
+signed_in <- function(id) {
+  if (!nzchar(find_tool(id))) return(FALSE)
+  if (id == "codex") {
+    r <- run_tool("codex", c("login", "status"))
+    r$status == 0 && grepl("Logged in", r$out)
+  } else {
+    r <- run_tool("claude", c("auth", "status"))
+    grepl('"loggedIn": *true', r$out)
+  }
+}
+
+# The agent this student uses: the one setup signed in, else whichever is
+# signed in; NA when neither is.
+course_agent <- function() {
+  f <- state_file("agent")
+  chosen <- if (file.exists(f)) readLines(f, warn = FALSE)[1] else character()
+  for (id in unique(c(chosen[chosen %in% names(agents)], names(agents))))
+    if (isTRUE(signed_in(id))) return(id)
+  NA_character_
+}
+
+#' Open the course AI agent (Codex or Claude Code, whichever the student
+#' signed in to) in RStudio's Terminal, in the current project.
 #' @export
 agent <- function() {
-  rstudioapi::terminalExecute(shQuote(find_tool("codex")), workingDir = getwd(), show = TRUE)
+  id <- course_agent()
+  if (is.na(id)) {
+    setup_agent()
+    id <- course_agent()
+    if (is.na(id)) return(invisible())
+  }
+  # Claude Code asks before each tool call; the RStudio connector's tools only
+  # run code in the student's own Console, so they are allowed up front.
+  args <- if (id == "claude") c("--allowedTools", "mcp__rstudio") else character()
+  rstudioapi::terminalExecute(paste(c(shQuote(find_tool(id)), args), collapse = " "),
+                              workingDir = getwd(), show = TRUE)
   invisible()
 }
 
 # The working layout when RStudio opens a course project: the project's run.R
-# in the editor above, Codex in the Terminal below. Only on a fresh RStudio
-# session: after an R restart the earlier Terminal is still running Codex.
+# in the editor above, the agent in the Terminal below. Only on a fresh RStudio
+# session: after an R restart the earlier Terminal is still running the agent.
 open_workspace <- function(newSession = TRUE) {
   if (!isTRUE(newSession) || !rstudioapi::isAvailable()) return(invisible())
   if (file.exists("run.R")) rstudioapi::navigateToFile("run.R")
-  if (!nzchar(find_tool("codex")) || !isTRUE(check_codex()$ok)) return(invisible())
+  if (is.na(course_agent())) return(invisible())
   agent()
 }

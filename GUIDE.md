@@ -7,7 +7,7 @@ You will do all of your coding for this course in RStudio, with an AI coding age
 Use your personal email address for each one, so that you keep the accounts after you leave Georgetown.
 
 - **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and setup works before it arrives.
-- **ChatGPT** (https://chatgpt.com), with a ChatGPT Plus subscription ($20 a month, https://chatgpt.com/pricing), which includes Codex, the course's AI coding agent. The course requires Plus from the first class. Then claim Codex for Students (https://chatgpt.com/codex/students) on the same account, verifying with your Georgetown email: it adds $100 of extra Codex usage for when you reach Plus's limits. The verification cannot be moved to another account, so use the one you will keep.
+- **An AI agent subscription**, required from the first class: either ChatGPT Plus ($20 a month, https://chatgpt.com/pricing), which runs Codex, or Claude Pro ($20 a month, https://claude.com/pricing), which runs Claude Code. Either one is the course's AI coding agent; you need only one. If you choose ChatGPT, also claim Codex for Students (https://chatgpt.com/codex/students) on the same account with your Georgetown email: it adds extra Codex usage for when you reach Plus's limits.
 - **IPUMS USA** (https://uma.pop.umn.edu/usa/user/new). Approval usually arrives by email within a day.
 - **KoboToolbox** (https://kf.kobotoolbox.org/accounts/signup/), on the global server.
 
@@ -27,21 +27,21 @@ On Windows, open PowerShell from the Start menu, paste this line and press Enter
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
 ```
 
-On a Mac the installer asks for your computer password once (it does not show as you type); on Windows, click Yes when Windows asks to allow changes. The installer then installs R, RStudio, Git, the GitHub tools, Codex and the course R package. Anything already on your computer is kept. When it finishes, RStudio opens the course folder, `ppol-6818` inside the `Projects` folder in your home folder (setup makes `Projects` if you do not have one). Keep it there: course folders must not be in iCloud, OneDrive or another synced folder, because syncing damages Git repositories.
+On a Mac the installer asks for your computer password once (it does not show as you type); on Windows, click Yes when Windows asks to allow changes. The installer then installs R, RStudio, Git, the GitHub tools, Codex, Claude Code and the course R package. Anything already on your computer is kept. When it finishes, RStudio opens the course folder, `ppol-6818` inside the `Projects` folder in your home folder (setup makes `Projects` if you do not have one). Keep it there: course folders must not be in iCloud, OneDrive or another synced folder, because syncing damages Git repositories.
 
 ## 3. Finish setup in RStudio
 
-RStudio continues where the installer stopped. It walks you through each sign-in in turn: it opens a browser page, you sign in or copy a key, and you come back to RStudio. At the end it prints a check like this one:
+RStudio continues where the installer stopped. It walks you through each sign-in in turn: it opens a browser page, you sign in or copy a key, and you come back to RStudio. For the AI agent it asks which subscription you have, ChatGPT Plus or Claude Pro, and signs you in to that agent in RStudio's Terminal. At the end it prints a check like this one:
 
 ```
 PPOL 6818 setup check
   Programs installed                 PASS
   Course folder                      PASS
   GitHub sign-in                     PASS  your-username
-  Codex sign-in                      PASS
+  AI agent sign-in                   PASS  Codex signed in
   KoboToolbox key                    PASS
   IPUMS key                          PASS
-  Codex connected to RStudio         PASS
+  Agent connected to RStudio         PASS
   Course organization                WAIT  not invited yet
 ```
 
@@ -51,10 +51,10 @@ Copy the whole check, with your GitHub username, into the Setup assignment on Ca
 
 After we invite you, open the `ppol-6818` project in RStudio again (File, Recent Projects). RStudio accepts the invitation and downloads each new course repository into the `ppol-6818` folder. RStudio repeats this every time you open a course project. New repositories for later assignments arrive the same way.
 
-## Working with Codex
+## Working with the agent
 
-Codex, the course agent, opens in RStudio's Terminal every time RStudio opens the course folder. If you close it, click **Addins > Course agent** to open it again, in the project you have open. It uses the ChatGPT account you signed in with during setup. Ask it in plain English to write, run and check code. It runs its code in RStudio's Console, as if you had pressed Run: you see the code and what it prints in the Console, the objects it makes in the Environment pane and its plots in the Plots pane. The agent reads the course rules from the file `AGENTS.md` in each repository: it writes code and shows you evidence that it worked, and it does not write the prose you submit.
+The course agent, Codex or Claude Code, opens in RStudio's Terminal every time RStudio opens the course folder. If you close it, click **Addins > Course agent** to open it again, in the project you have open. It uses the account you signed in with during setup. Ask it in plain English to write, run and check code. It runs its code in RStudio's Console, as if you had pressed Run: you see the code and what it prints in the Console, the objects it makes in the Environment pane and its plots in the Plots pane. The agent reads the course rules from the file `AGENTS.md` in each repository (Claude Code reaches it through `CLAUDE.md`): it writes code and shows you evidence that it worked, and it does not write the prose you submit.
 
 ## Data
 
-Your course repositories are private; only the minisite you publish from them is public. Your IPUMS data never goes into a repository, because the IPUMS terms do not allow sharing it. Each repository has a `run.R` that downloads your extract with your own key into a `data` folder that Git ignores. Your KoboToolbox forms live in your own KoboToolbox account, and Codex can create, deploy and read them for you.
+Your course repositories are private; only the minisite you publish from them is public. Your IPUMS data never goes into a repository, because the IPUMS terms do not allow sharing it. Each repository has a `run.R` that downloads your extract with your own key into a `data` folder that Git ignores. Your KoboToolbox forms live in your own KoboToolbox account, and the agent can create, deploy and read them for you.

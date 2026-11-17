@@ -53,23 +53,22 @@ setup_github <- function() {
   run_tool("gh", c("auth", "setup-git"))
 }
 
-setup_codex <- function() {
-  if (check_codex()$ok) return(invisible())
-  account_first("ChatGPT", links$chatgpt)
-  if (!isTRUE(ask("ChatGPT", "Does your ChatGPT account have a Plus or Pro subscription?"))) {
-    utils::browseURL(links$chatgpt_pricing)
-    tell("ChatGPT", paste("The ChatGPT pricing page is open. The course requires ChatGPT Plus ($20 a month),",
-                          "which includes Codex in RStudio. Subscribe on the account you will use all semester,",
-                          "then click OK."))
-  }
-  if (!isTRUE(ask("Codex", "Have you claimed Codex for Students on this account?"))) {
-    utils::browseURL(links$codex_students)
-    tell("Codex", paste("The Codex for Students page is open. Claim it with your Georgetown email on the same",
-                        "ChatGPT account: it adds $100 of extra Codex usage for when you reach Plus's limits.",
-                        "The verification cannot be moved to another account. Click OK when done."))
-  }
-  in_terminal("codex", "login")
-  wait_for(check_codex, "Codex sign-in")
+# The course requires ChatGPT Plus or Claude Pro before the first class
+# (syllabus). Ask which one the student has, then sign that agent in: its
+# sign-in runs in the Terminal and opens the browser.
+setup_agent <- function() {
+  if (!is.na(course_agent())) return(invisible())
+  installed <- names(agents)[nzchar(vapply(names(agents), find_tool, ""))]
+  if (!length(installed)) return(invisible())
+  id <- if (length(installed) == 1) installed else if (isTRUE(ask("AI agent",
+          "Which subscription do you have for the course agent: ChatGPT Plus (for Codex) or Claude Pro (for Claude Code)?",
+          "ChatGPT Plus", "Claude Pro"))) "codex" else "claude"
+  writeLines(id, state_file("agent"))
+  a <- agents[[id]]
+  in_terminal(id, a$login)
+  tell(a$name, paste0("The Terminal is signing you in to ", a$name, ". Sign in in the browser with the ",
+                      a$account, " account that has your ", a$plan, " subscription, then come back here."))
+  wait_for(function() list(ok = signed_in(id)), paste(a$name, "sign-in"))
 }
 
 kobo_token_from_password <- function() {
@@ -124,7 +123,7 @@ setup <- function() {
   migrate_keys()
   load_keys()
   setup_github()
-  setup_codex()
+  setup_agent()
   setup_kobo()
   setup_ipums()
   setup_console_agent()

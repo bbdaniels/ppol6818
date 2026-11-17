@@ -140,15 +140,22 @@ console_tools <- function() {
   )
 }
 
-#' The MCP server Codex starts: the Console tools, plus mcptools'
-#' tools for choosing the RStudio session.
+#' The MCP server the course agent starts: the Console tools, plus
+#' mcptools' tools for choosing the RStudio session.
 #' @export
 console_server <- function() mcptools::mcp_server(tools = console_tools())
 
-# Register the RStudio connector with Codex.
+# Register the RStudio connector with each agent installed, so either works.
 setup_console_agent <- function() {
   rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
-  run_tool("codex", c("mcp", "remove", "rstudio"))
-  run_tool("codex", c("mcp", "add", "rstudio", "--", rscript, "-e", "ppol6818::console_server()"))
+  server <- c("--", rscript, "-e", "ppol6818::console_server()")
+  if (nzchar(find_tool("codex"))) {
+    run_tool("codex", c("mcp", "remove", "rstudio"))
+    run_tool("codex", c("mcp", "add", "rstudio", server))
+  }
+  if (nzchar(find_tool("claude"))) {
+    run_tool("claude", c("mcp", "remove", "-s", "user", "rstudio"))
+    run_tool("claude", c("mcp", "add", "-s", "user", "rstudio", server))
+  }
   invisible()
 }

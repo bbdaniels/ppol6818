@@ -3,9 +3,6 @@
 links <- list(
   github_signup = "https://github.com/signup",
   github_education = "https://github.com/settings/education/benefits",
-  chatgpt = "https://chatgpt.com",
-  chatgpt_pricing = "https://chatgpt.com/pricing",
-  codex_students = "https://chatgpt.com/codex/students",
   ipums_signup = "https://uma.pop.umn.edu/usa/user/new",
   ipums_keys = "https://account.ipums.org/api_keys",
   kobo_signup = "https://kf.kobotoolbox.org/accounts/signup/"
@@ -17,10 +14,12 @@ kobo_server <- function() {
 }
 
 check_tools <- function() {
-  need <- c("git", "gh", "codex")
+  need <- c("git", "gh")
   missing <- need[!nzchar(vapply(need, find_tool, ""))]
+  have_agents <- names(agents)[nzchar(vapply(names(agents), find_tool, ""))]
+  if (!length(have_agents)) missing <- c(missing, "codex or claude")
   if (length(missing)) list(ok = FALSE, detail = paste("missing:", paste(missing, collapse = ", ")))
-  else list(ok = TRUE, detail = paste(need, collapse = ", "))
+  else list(ok = TRUE, detail = paste(c(need, have_agents), collapse = ", "))
 }
 
 check_github <- function() {
@@ -29,9 +28,10 @@ check_github <- function() {
   list(ok = user$status == 0, detail = trimws(user$out))
 }
 
-check_codex <- function() {
-  r <- run_tool("codex", c("login", "status"))
-  list(ok = r$status == 0 && grepl("Logged in", r$out), detail = trimws(r$out))
+check_agent <- function() {
+  id <- course_agent()
+  if (is.na(id)) return(list(ok = FALSE, detail = "not signed in to Codex or Claude Code"))
+  list(ok = TRUE, detail = paste(agents[[id]]$name, "signed in"))
 }
 
 check_kobo <- function() {
@@ -53,10 +53,22 @@ check_ipums <- function() {
   list(ok = TRUE, detail = "key works")
 }
 
-# The connector that lets Codex run code in the RStudio session.
+# The connector that lets the agent run code in the RStudio session. Claude
+# Code's own check (claude mcp get) starts the server, so its configuration
+# file is read instead.
+has_connector <- function(id) {
+  if (id == "codex") return(grepl("rstudio", run_tool("codex", c("mcp", "list"))$out))
+  dir <- Sys.getenv("CLAUDE_CONFIG_DIR")
+  f <- file.path(if (nzchar(dir)) dir else home_dir(), ".claude.json")
+  cfg <- tryCatch(jsonlite::fromJSON(f, simplifyVector = FALSE), error = function(e) NULL)
+  !is.null(cfg$mcpServers$rstudio)
+}
+
 check_console_agent <- function() {
-  ok <- grepl("rstudio", run_tool("codex", c("mcp", "list"))$out)
-  list(ok = ok, detail = if (ok) "rstudio connector set up" else "rstudio connector missing")
+  id <- course_agent()
+  if (is.na(id)) return(list(ok = FALSE, detail = "no agent signed in"))
+  ok <- has_connector(id)
+  list(ok = ok, detail = paste("rstudio connector", if (ok) "set up in" else "missing from", agents[[id]]$name))
 }
 
 check_folder <- function() {
@@ -72,10 +84,10 @@ checks <- list(
   "Programs installed" = check_tools,
   "Course folder" = check_folder,
   "GitHub sign-in" = check_github,
-  "Codex sign-in" = check_codex,
+  "AI agent sign-in" = check_agent,
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
-  "Codex connected to RStudio" = check_console_agent,
+  "Agent connected to RStudio" = check_console_agent,
   "Course organization" = function() check_course()
 )
 

@@ -2,8 +2,8 @@
 #
 #   powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
 #
-# It installs R, RStudio, Git, the GitHub command-line tool and Codex with
-# winget, installs the course R package, creates the course
+# It installs R, RStudio, Git, the GitHub command-line tool, Codex and Claude
+# Code with winget, installs the course R package, creates the course
 # folder, and opens it in RStudio, where course setup continues.
 # It is safe to run again: anything already installed is kept.
 
@@ -67,6 +67,7 @@ $packages = [ordered]@{
   "Git.Git"      = "Git"
   "GitHub.cli"   = "GitHub CLI"
   "OpenAI.Codex" = "Codex"
+  "Anthropic.ClaudeCode" = "Claude Code"
 }
 foreach ($id in $packages.Keys) {
   $listed = winget list --id $id -e --accept-source-agreements 2>$null | Select-String -SimpleMatch $id

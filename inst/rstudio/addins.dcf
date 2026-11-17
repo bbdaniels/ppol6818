@@ -1,5 +1,5 @@
 Name: Course agent
-Description: Open Codex, the course AI agent, in the Terminal, in the current project.
+Description: Open the course AI agent (Codex or Claude Code) in the Terminal, in the current project.
 Binding: agent
 Interactive: true
 

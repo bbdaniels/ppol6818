@@ -3,7 +3,8 @@
 #
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-mac.sh)"
 #
-# It installs R, RStudio, Git, the GitHub command-line tool and Codex,
+# It installs R, RStudio, Git, the GitHub command-line tool, Codex and
+# Claude Code (the student signs in to the one their subscription runs),
 # installs the course R package, creates the course folder
 # ~/Projects/ppol-6818, and opens it in RStudio, where course setup continues.
 # It is safe to run again: anything already installed is kept.
@@ -63,6 +64,13 @@ if command -v codex >/dev/null 2>&1; then
 else
   say "Installing Codex"
   brew install --cask codex
+fi
+
+if command -v claude >/dev/null 2>&1; then
+  echo "Claude Code is already installed."
+else
+  say "Installing Claude Code"
+  brew install --cask claude-code
 fi
 
 # RStudio and R come from the developers and are notarized; clearing the
