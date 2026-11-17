@@ -107,5 +107,6 @@ make_course_project <- function() {
   src <- system.file("project", package = "ppol6818")
   file.copy(file.path(src, "ppol-6818.Rproj"), file.path(d, "ppol-6818.Rproj"), overwrite = TRUE)
   file.copy(file.path(src, "Rprofile"), file.path(d, ".Rprofile"), overwrite = TRUE)
+  file.copy(file.path(src, "run.R"), file.path(d, "run.R"), overwrite = FALSE)
   file.path(d, "ppol-6818.Rproj")
 }

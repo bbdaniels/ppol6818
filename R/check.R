@@ -53,10 +53,11 @@ check_ipums <- function() {
   list(ok = TRUE, detail = "key works")
 }
 
-# The connector that lets the agent run code in the RStudio session: in
-# Codex's settings, or for Claude Code the file agent() passes it.
+# The connector that lets the agent run code in the RStudio session, which
+# agent() passes on the command line (R/console.R).
 has_connector <- function(id) {
-  if (id == "codex") return(grepl("rstudio", run_tool("codex", c("mcp", "list"))$out))
+  if (!file.exists(rscript_path()) || !requireNamespace("mcptools", quietly = TRUE)) return(FALSE)
+  if (id == "codex") return(TRUE)
   cfg <- tryCatch(jsonlite::fromJSON(claude_mcp_file(), simplifyVector = FALSE), error = function(e) NULL)
   identical(cfg$mcpServers$rstudio$command, rscript_path())
 }

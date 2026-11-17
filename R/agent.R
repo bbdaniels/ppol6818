@@ -39,14 +39,7 @@ agent <- function() {
     id <- course_agent()
     if (is.na(id)) return(invisible())
   }
-  # Claude Code gets the RStudio connector from the course's file, and its
-  # tools are allowed up front: they only run code in the student's own
-  # Console, and otherwise Claude Code asks before every call.
-  args <- if (id == "claude") {
-    if (!file.exists(claude_mcp_file())) setup_console_agent()
-    c("--mcp-config", shQuote(claude_mcp_file()), "--allowedTools", "mcp__rstudio")
-  } else character()
-  rstudioapi::terminalExecute(paste(c(shQuote(find_tool(id)), args), collapse = " "),
+  rstudioapi::terminalExecute(paste(c(shQuote(find_tool(id)), connector_args(id)), collapse = " "),
                               workingDir = getwd(), show = TRUE)
   invisible()
 }
@@ -56,6 +49,9 @@ agent <- function() {
 # session: after an R restart the earlier Terminal is still running the agent.
 open_workspace <- function(newSession = TRUE) {
   if (!isTRUE(newSession) || !rstudioapi::isAvailable()) return(invisible())
+  # The course folder has its own run.R since this version; add it to older ones.
+  if (!file.exists("run.R") && normalizePath(getwd(), mustWork = FALSE) == normalizePath(course_dir(), mustWork = FALSE))
+    file.copy(system.file("project", "run.R", package = "ppol6818"), "run.R")
   if (file.exists("run.R")) rstudioapi::navigateToFile("run.R")
   if (is.na(course_agent())) return(invisible())
   agent()

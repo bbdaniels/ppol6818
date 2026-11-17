@@ -148,19 +148,31 @@ console_server <- function() mcptools::mcp_server(tools = console_tools())
 rscript_path <- function()
   file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
 
-# Claude Code gets the connector only when the course opens it: agent() passes
-# this file with --mcp-config. Registering it in the user's settings would make
-# every Claude Code session on the computer start an R process, course or not.
+# The agent gets the connector only when the course opens it from RStudio:
+# agent() passes it on the command line (Codex: -c overrides; Claude Code:
+# this file with --mcp-config). Registering it in the agent's own settings
+# would make every session of that agent on the computer start an R process,
+# course or not.
 claude_mcp_file <- function() state_file("claude-mcp.json")
+
+connector_args <- function(id) {
+  if (id == "codex") {
+    dq <- function(x) paste0('"', x, '"')
+    return(c("-c", dq(paste0("mcp_servers.rstudio.command='", rscript_path(), "'")),
+             "-c", dq("mcp_servers.rstudio.args=['-e','ppol6818::console_server()']")))
+  }
+  if (!file.exists(claude_mcp_file())) setup_console_agent()
+  # Its tools only run code in the student's own Console; allowed up front,
+  # since otherwise Claude Code asks before every call.
+  c("--mcp-config", shQuote(claude_mcp_file()), "--allowedTools", "mcp__rstudio")
+}
 
 # Set up the RStudio connector for each agent installed, so either works.
 setup_console_agent <- function() {
-  if (nzchar(find_tool("codex"))) {
-    run_tool("codex", c("mcp", "remove", "rstudio"))
-    run_tool("codex", c("mcp", "add", "rstudio", "--", rscript_path(), "-e", "ppol6818::console_server()"))
-  }
+  # Earlier versions of this package registered it in each agent's own
+  # settings; take that out.
+  if (nzchar(find_tool("codex"))) run_tool("codex", c("mcp", "remove", "rstudio"))
   if (nzchar(find_tool("claude"))) {
-    # An earlier version of this package registered it user-wide; take that out.
     run_tool("claude", c("mcp", "remove", "-s", "user", "rstudio"))
     cfg <- list(mcpServers = list(rstudio = list(
       type = "stdio", command = rscript_path(), args = c("-e", "ppol6818::console_server()"))))
