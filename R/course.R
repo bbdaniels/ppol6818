@@ -6,11 +6,12 @@ course_org <- "ppol-6818-2027"
 #' The folder that holds the course project and every course repository:
 #' ppol-6818 in the Projects folder of the home folder (made if missing; Mac
 #' and Windows ignore case, so an existing "projects" folder is used), never
-#' in a folder iCloud or OneDrive syncs.
+#' in a folder iCloud or OneDrive syncs. In a codespace, /workspaces, the
+#' folder above the one repository the codespace holds.
 #' @export
 course_dir <- function() {
   d <- Sys.getenv("PPOL6818_DIR")
-  if (nzchar(d)) d else file.path(home_dir(), "Projects", "ppol-6818")
+  if (nzchar(d)) d else if (in_codespace()) "/workspaces" else file.path(home_dir(), "Projects", "ppol-6818")
 }
 
 gh_json <- function(args) {
@@ -60,7 +61,8 @@ clone_course_repos <- function() {
 #' Accept course invitations and clone new course repositories.
 #' @export
 sync_course <- function() {
-  if (!check_github()$ok) return(invisible(list(accepted = character(), cloned = character())))
+  # A codespace holds one repository and was opened from it on GitHub.
+  if (in_codespace() || !check_github()$ok) return(invisible(list(accepted = character(), cloned = character())))
   acc <- accept_invitations()
   cl <- clone_course_repos()
   for (a in acc) message("Accepted the invitation to ", a)
@@ -73,6 +75,12 @@ sync_course <- function() {
 }
 
 check_course <- function() {
+  # The codespace's GitHub key reaches only its own repository, and opening a
+  # course repository's codespace already took membership.
+  if (in_codespace()) {
+    repo <- Sys.getenv("GITHUB_REPOSITORY")
+    if (startsWith(repo, paste0(course_org, "/"))) return(list(ok = TRUE, detail = paste("codespace of", repo)))
+  }
   m <- gh_json(paste0("user/memberships/orgs/", course_org))
   if (is.null(m)) return(list(ok = NA, detail = "not invited yet (expected until you submit this output)"))
   if (!identical(m$state, "active")) return(list(ok = FALSE, detail = "invitation not accepted; click Addins > Course setup"))

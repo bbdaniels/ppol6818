@@ -25,10 +25,14 @@ synced_folder <- function(d) {
     grepl("onedrive|icloud|dropbox|google ?drive", d, ignore.case = TRUE)
 }
 
+# A GitHub codespace (the browser path): RStudio Server in a container that
+# holds one course repository, signed in to GitHub as the student.
+in_codespace <- function() identical(Sys.getenv("CODESPACES"), "true")
+
 tool_dirs <- function() {
   home <- home_dir()
   c(file.path(home, ".local", "bin"),
-    "/opt/homebrew/bin", "/usr/local/bin",
+    "/opt/homebrew/bin", "/usr/local/bin", "/usr/local/share/nvm/current/bin",
     file.path(Sys.getenv("LOCALAPPDATA"), "Programs"),
     file.path(Sys.getenv("APPDATA"), "npm"),
     file.path(Sys.getenv("LOCALAPPDATA"), "Microsoft", "WinGet", "Links"),

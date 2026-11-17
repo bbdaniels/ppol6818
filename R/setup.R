@@ -40,7 +40,7 @@ account_first <- function(service, signup, extra = NULL) {
 }
 
 setup_github <- function() {
-  if (check_github()$ok) return(invisible())
+  if (check_github()$ok || in_codespace()) return(invisible())
   account_first("GitHub", links$github_signup, function() {
     utils::browseURL(links$github_education)
     tell("GitHub", paste("The GitHub Education page is open. Add your Georgetown email to your GitHub account",
@@ -65,9 +65,15 @@ setup_agent <- function() {
           "ChatGPT Plus", "Claude Pro"))) "codex" else "claude"
   writeLines(id, state_file("agent"))
   a <- agents[[id]]
-  in_terminal(id, a$login)
-  tell(a$name, paste0("The Terminal is signing you in to ", a$name, ". Sign in in the browser with the ",
-                      a$account, " account that has your ", a$plan, " subscription, then come back here."))
+  # In a codespace the browser cannot reach a sign-in page served inside the
+  # container, so Codex signs in with a code instead.
+  device <- in_codespace() && id == "codex"
+  in_terminal(id, c(a$login, if (device) "--device-auth"))
+  tell(a$name, paste0("The Terminal is signing you in to ", a$name, ". ",
+                      if (in_codespace()) "Open the link it shows, sign in" else "Sign in in the browser",
+                      " with the ", a$account, " account that has your ", a$plan, " subscription",
+                      if (in_codespace()) ", and follow the steps it shows" else "",
+                      ", then come back here."))
   wait_for(function() list(ok = signed_in(id)), paste(a$name, "sign-in"))
 }
 

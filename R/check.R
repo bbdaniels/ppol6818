@@ -23,7 +23,8 @@ check_tools <- function() {
 }
 
 check_github <- function() {
-  if (run_tool("gh", c("auth", "status"))$status != 0) return(list(ok = FALSE, detail = "not signed in"))
+  if (run_tool("gh", c("auth", "status"))$status != 0)
+    return(list(ok = FALSE, detail = if (in_codespace()) "the codespace's GitHub sign-in did not reach R; reload RStudio" else "not signed in"))
   user <- run_tool("gh", c("api", "user", "--jq", ".login"))
   list(ok = user$status == 0, detail = trimws(user$out))
 }
@@ -70,6 +71,7 @@ check_console_agent <- function() {
 }
 
 check_folder <- function() {
+  if (in_codespace()) return(list(ok = TRUE, detail = paste("codespace", Sys.getenv("CODESPACE_NAME"))))
   d <- course_dir()
   if (!dir.exists(d)) return(list(ok = FALSE, detail = paste("missing:", d)))
   if (synced_folder(d)) return(list(ok = FALSE, detail = paste("inside a cloud-synced folder:", d)))
