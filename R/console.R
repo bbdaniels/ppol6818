@@ -145,17 +145,26 @@ console_tools <- function() {
 #' @export
 console_server <- function() mcptools::mcp_server(tools = console_tools())
 
-# Register the RStudio connector with each agent installed, so either works.
+rscript_path <- function()
+  file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+
+# Claude Code gets the connector only when the course opens it: agent() passes
+# this file with --mcp-config. Registering it in the user's settings would make
+# every Claude Code session on the computer start an R process, course or not.
+claude_mcp_file <- function() state_file("claude-mcp.json")
+
+# Set up the RStudio connector for each agent installed, so either works.
 setup_console_agent <- function() {
-  rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
-  server <- c("--", rscript, "-e", "ppol6818::console_server()")
   if (nzchar(find_tool("codex"))) {
     run_tool("codex", c("mcp", "remove", "rstudio"))
-    run_tool("codex", c("mcp", "add", "rstudio", server))
+    run_tool("codex", c("mcp", "add", "rstudio", "--", rscript_path(), "-e", "ppol6818::console_server()"))
   }
   if (nzchar(find_tool("claude"))) {
+    # An earlier version of this package registered it user-wide; take that out.
     run_tool("claude", c("mcp", "remove", "-s", "user", "rstudio"))
-    run_tool("claude", c("mcp", "add", "-s", "user", "rstudio", server))
+    cfg <- list(mcpServers = list(rstudio = list(
+      type = "stdio", command = rscript_path(), args = c("-e", "ppol6818::console_server()"))))
+    jsonlite::write_json(cfg, claude_mcp_file(), auto_unbox = TRUE, pretty = TRUE)
   }
   invisible()
 }

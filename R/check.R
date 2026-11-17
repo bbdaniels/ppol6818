@@ -53,15 +53,12 @@ check_ipums <- function() {
   list(ok = TRUE, detail = "key works")
 }
 
-# The connector that lets the agent run code in the RStudio session. Claude
-# Code's own check (claude mcp get) starts the server, so its configuration
-# file is read instead.
+# The connector that lets the agent run code in the RStudio session: in
+# Codex's settings, or for Claude Code the file agent() passes it.
 has_connector <- function(id) {
   if (id == "codex") return(grepl("rstudio", run_tool("codex", c("mcp", "list"))$out))
-  dir <- Sys.getenv("CLAUDE_CONFIG_DIR")
-  f <- file.path(if (nzchar(dir)) dir else home_dir(), ".claude.json")
-  cfg <- tryCatch(jsonlite::fromJSON(f, simplifyVector = FALSE), error = function(e) NULL)
-  !is.null(cfg$mcpServers$rstudio)
+  cfg <- tryCatch(jsonlite::fromJSON(claude_mcp_file(), simplifyVector = FALSE), error = function(e) NULL)
+  identical(cfg$mcpServers$rstudio$command, rscript_path())
 }
 
 check_console_agent <- function() {

@@ -39,9 +39,13 @@ agent <- function() {
     id <- course_agent()
     if (is.na(id)) return(invisible())
   }
-  # Claude Code asks before each tool call; the RStudio connector's tools only
-  # run code in the student's own Console, so they are allowed up front.
-  args <- if (id == "claude") c("--allowedTools", "mcp__rstudio") else character()
+  # Claude Code gets the RStudio connector from the course's file, and its
+  # tools are allowed up front: they only run code in the student's own
+  # Console, and otherwise Claude Code asks before every call.
+  args <- if (id == "claude") {
+    if (!file.exists(claude_mcp_file())) setup_console_agent()
+    c("--mcp-config", shQuote(claude_mcp_file()), "--allowedTools", "mcp__rstudio")
+  } else character()
   rstudioapi::terminalExecute(paste(c(shQuote(find_tool(id)), args), collapse = " "),
                               workingDir = getwd(), show = TRUE)
   invisible()
