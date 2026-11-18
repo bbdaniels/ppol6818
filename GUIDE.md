@@ -1,6 +1,11 @@
 # PPOL 6818 setup guide
 
-You will do all of your coding for this course in RStudio, with an AI coding agent beside you in RStudio's Terminal. Setup takes about half an hour, most of it waiting for downloads, and is due Sunday, January 17, 2027.
+You will do all of your coding for this course in RStudio, with an AI coding agent beside you in RStudio's Terminal. RStudio can run in two places, and both give you the same RStudio, the same agent and the same course tools:
+
+- **In the browser**, in a GitHub codespace: a computer GitHub runs for you, with everything already installed. Nothing goes on your own computer, and any computer with a current browser works. GitHub's free allowance covers about 60 hours a month of a course codespace, and about 90 with GitHub Education.
+- **On your computer**: an installer puts R, RStudio and the course tools on your Mac or Windows computer. It works offline and has no hours limit.
+
+You can switch at any time, since your work lives in your GitHub repositories either way. Setup takes about half an hour (less in the browser) and is due Sunday, January 17, 2027.
 
 ## 1. Create four accounts
 
@@ -13,7 +18,15 @@ Use your personal email address for each one, so that you keep the accounts afte
 
 If you skip one, setup opens its sign-up page when it gets there.
 
-## 2. Run the installer
+## 2. Open RStudio
+
+### In the browser
+
+Sign in to GitHub and open https://codespaces.new/ppol-6818-2027/template, then click **Create codespace**. A code editor opens in the browser; if it asks whether you trust the folder's authors, click **Trust Folder & Continue**. After about a minute RStudio opens in a new browser tab, on the course project. If your browser blocks the new tab, click **Ports** at the bottom of the editor and then the globe beside **RStudio**. You are signed in to GitHub already, so setup skips that step.
+
+The codespace stops by itself after 30 idle minutes and keeps your files. To come back, open https://github.com/codespaces and click the codespace's name; make a new one only for a new repository. GitHub deletes a codespace after 30 days unused, so push your work to GitHub before you leave it. Stored codespaces also count against a monthly storage allowance (15 GB, or 20 with GitHub Education), so delete one there once its repository's work is pushed and done.
+
+### On your computer
 
 On a Mac, open Terminal (in Applications, Utilities), paste this line and press Return:
 
@@ -31,7 +44,7 @@ On a Mac the installer asks for your computer password once (it does not show as
 
 ## 3. Finish setup in RStudio
 
-RStudio continues where the installer stopped. It walks you through each sign-in in turn: it opens a browser page, you sign in or copy a key, and you come back to RStudio. For the AI agent it asks which subscription you have, ChatGPT Plus or Claude Pro, and signs you in to that agent in RStudio's Terminal. At the end it prints a check like this one:
+RStudio continues where the installer stopped, or where the codespace opened. It walks you through each sign-in in turn: it opens a browser page, you sign in or copy a key, and you come back to RStudio. For the AI agent it asks which subscription you have, ChatGPT Plus or Claude Pro, and signs you in to that agent in RStudio's Terminal. At the end it prints a check like this one:
 
 ```
 PPOL 6818 setup check
@@ -45,11 +58,17 @@ PPOL 6818 setup check
   Course organization                WAIT  not invited yet
 ```
 
+In the browser, setup asks for your IPUMS and KoboToolbox keys again in each new codespace. To skip that, save them once as Codespaces secrets at https://github.com/settings/codespaces (**New secret**): `IPUMS_API_KEY` and `KOBO_API_TOKEN`, each with access to the repositories in `ppol-6818-2027`. Every codespace you open then has them.
+
 Copy the whole check, with your GitHub username, into the Setup assignment on Canvas. WAIT on the last line is expected: we invite you to the course organization on GitHub after we see your check. If any line says FAIL, click **Addins > Course setup** in RStudio's toolbar to try that step again, and bring the check to office hours if that step fails again.
 
 ## 4. Join the course organization
 
-After we invite you, open the `ppol-6818` project in RStudio again (File, Recent Projects). RStudio accepts the invitation and downloads each new course repository into the `ppol-6818` folder. RStudio repeats this every time you open a course project. New repositories for later assignments arrive the same way.
+After we invite you, GitHub emails you an invitation to the course organization.
+
+In the browser, accept it at https://github.com/orgs/ppol-6818-2027/invitation, then open each course repository from https://github.com/ppol-6818-2027 (**Code**, **Codespaces**, **Create codespace on main**). Each repository gets its own codespace, with RStudio open on its project.
+
+On your computer, open the `ppol-6818` project in RStudio again (File, Recent Projects). RStudio accepts the invitation and downloads each new course repository into the `ppol-6818` folder. RStudio repeats this every time you open a course project. New repositories for later assignments arrive the same way.
 
 ## Working with the agent
 

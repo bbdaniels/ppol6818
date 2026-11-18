@@ -76,10 +76,12 @@ sync_course <- function() {
 
 check_course <- function() {
   # The codespace's GitHub key reaches only its own repository, and opening a
-  # course repository's codespace already took membership.
+  # course repository's codespace already took membership. Setup runs in a
+  # codespace of the public template, which anyone can open.
   if (in_codespace()) {
     repo <- Sys.getenv("GITHUB_REPOSITORY")
-    if (startsWith(repo, paste0(course_org, "/"))) return(list(ok = TRUE, detail = paste("codespace of", repo)))
+    if (startsWith(repo, paste0(course_org, "/")) && !(basename(repo) %in% c("template", "pitch-template")))
+      return(list(ok = TRUE, detail = paste("codespace of", repo)))
   }
   m <- gh_json(paste0("user/memberships/orgs/", course_org))
   if (is.null(m)) return(list(ok = NA, detail = "not invited yet (expected until you submit this output)"))
