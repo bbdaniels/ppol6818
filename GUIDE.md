@@ -1,8 +1,11 @@
 # PPOL 6818 setup guide
 
-You will do all of your coding for this course in RStudio, in the browser, with an AI coding agent beside you in RStudio's Terminal. RStudio runs in a GitHub codespace: a computer GitHub runs for you, with R, RStudio, the agent and the course tools already installed. Nothing goes on your own computer, and any computer with a current browser works.
+You will do all of your coding for this course in RStudio, with an AI coding agent beside you in RStudio's Terminal. RStudio can run in two places, and both give you the same RStudio, the same agent and the same course tools:
 
-Setup has four steps and takes about half an hour, spread over a few days because of the invitation in step 3. Submit your GitHub username by Sunday, January 10, 2027, and your setup check by Sunday, January 17.
+- **In the browser**, in a GitHub codespace: a computer GitHub runs for you, with everything already installed. Nothing goes on your own computer, any computer with a current browser works, and the course's own IPUMS and KoboToolbox accounts reach it by themselves. This is the course's main path, and the one the labs are written for.
+- **On your computer**: an installer puts R, RStudio, Git, the agent and the course tools on your Mac or Windows computer. It works offline, has no hours limit, and stays yours after the course. The course's keys do not reach your computer, so on it you use your own IPUMS and KoboToolbox accounts (step 5).
+
+You can use both, since your work lives in your GitHub repositories either way. Setup has four steps and takes about half an hour, spread over a few days because of the invitation in step 3. Submit your GitHub username by Sunday, January 10, 2027, and your setup check by Sunday, January 17.
 
 ## 1. Create two accounts
 
@@ -11,7 +14,7 @@ Use your personal email address for each one, so that you keep the accounts afte
 - **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and nothing waits for it.
 - **An AI agent subscription**, required from the first class: either ChatGPT Plus ($20 a month, https://chatgpt.com/pricing), which runs Codex, or Claude Pro ($20 a month, https://claude.com/pricing), which runs Claude Code. Either one is the course's AI coding agent; you need only one. If you choose ChatGPT, also claim Codex for Students (https://chatgpt.com/codex/students) on the same account with your Georgetown email: it adds extra Codex usage for when you reach Plus's limits.
 
-You do not need an IPUMS or KoboToolbox account: the course has one of each, and its keys reach your codespace by themselves.
+In the browser you need no IPUMS or KoboToolbox account: the course has one of each, and its keys reach your codespace by themselves. On your own computer you need your own (step 5).
 
 ## 2. Submit your GitHub username
 
@@ -46,6 +49,31 @@ PPOL 6818 setup check
 
 Copy the whole check into the **Setup check** assignment on Canvas. If any line says FAIL, click **Addins > Course setup** in RStudio's toolbar to try that step again, and bring the check to Sifat's lab session or office hours if it fails again. To print the check again at any time, run `ppol6818::check()` in RStudio's Console.
 
+## 5. Optional: RStudio on your computer
+
+Do this after step 4, so that the codespace is set up first. Make two more accounts, with your personal email address:
+
+- **IPUMS USA** (https://uma.pop.umn.edu/usa/user/new). Approval usually arrives by email within a day.
+- **KoboToolbox** (https://kf.kobotoolbox.org/accounts/signup/), on the global server.
+
+On a Mac, open Terminal (in Applications, Utilities), paste this line and press Return:
+
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-mac.sh)"
+```
+
+On Windows, open PowerShell from the Start menu, paste this line and press Enter:
+
+```
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/bbdaniels/ppol6818/main/install/install-windows.ps1 | iex"
+```
+
+On a Mac the installer asks for your computer password once (it does not show as you type); on Windows, click Yes when Windows asks to allow changes. The installer then installs R, RStudio, Git, the GitHub tools, Codex, Claude Code and the course R package. Anything already on your computer is kept. When it finishes, RStudio opens the course folder, `ppol-6818` inside the `Projects` folder in your home folder (setup makes `Projects` if you do not have one). Keep it there: course folders must not be in iCloud, OneDrive or another synced folder, because syncing damages Git repositories.
+
+RStudio then walks you through each sign-in in turn: GitHub, your agent, and your own KoboToolbox and IPUMS keys. Each time it opens a browser page, you sign in or copy a key, and you come back to RStudio. It then downloads your lab repository, and later your pair's project repository, into the `ppol-6818` folder, and does so again each time you open a course project. It ends with the same check as the codespace; you do not need to submit this one.
+
+On your computer, `ipums_get()` makes each extract on your own IPUMS account, so the first run of a lab's data step can take a few minutes longer than in the codespace, where the course made the extract the day before.
+
 ## Coming back
 
 Click **Open RStudio** on the Canvas home page. It opens https://github.com/codespaces, the list of your codespaces; click yours and RStudio opens again where you left it. Keep this one codespace all term: when pairs are formed, your pair's project repository appears beside your lab repository in it (switch between them in RStudio's **Projects** menu, top right).
@@ -58,4 +86,4 @@ The course agent, Codex or Claude Code, opens in RStudio's Terminal every time R
 
 ## Data
 
-Your course repositories are private; only the minisite you publish from your pair's repository is public. IPUMS data never goes into a repository, because the IPUMS terms do not allow sharing it: each lab's code downloads the extract through the course's IPUMS account into a `data` folder that Git ignores. Your pair's KoboToolbox forms live in the course's KoboToolbox account, and the agent can create, deploy and read them for you.
+Your course repositories are private; only the minisite you publish from your pair's repository is public. IPUMS data never goes into a repository, because the IPUMS terms do not allow sharing it: each lab's code downloads the extract, through the course's IPUMS account in a codespace or your own on your computer, into a `data` folder that Git ignores. Your pair's KoboToolbox forms live in the course's KoboToolbox account, and the agent can create, deploy and read them for you.
