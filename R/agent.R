@@ -52,7 +52,11 @@ open_workspace <- function(newSession = TRUE) {
   # The course folder has its own run.R since this version; add it to older ones.
   if (!file.exists("run.R") && normalizePath(getwd(), mustWork = FALSE) == normalizePath(course_dir(), mustWork = FALSE))
     file.copy(system.file("project", "run.R", package = "ppol6818"), "run.R")
+  # A lab repository has a folder a week (week-01, week-02, ...): open the
+  # newest week's run.R.
+  week <- utils::tail(sort(Sys.glob("week-[0-9][0-9]/run.R")), 1)
   if (file.exists("run.R")) rstudioapi::navigateToFile("run.R")
+  else if (length(week)) rstudioapi::navigateToFile(week)
   if (is.na(course_agent())) return(invisible())
   agent()
 }
