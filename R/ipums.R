@@ -41,7 +41,7 @@ ipums_key <- function() {
 # A finished extract on the account made from the same definition whose
 # files are still there, if any. IPUMS deletes microdata extract files 72
 # hours after they are made (ipumsr's API article), so the course remakes
-# each lab's extracts the day before the lab (course-admin, prepare_extracts).
+# each lab's extracts the day before the lab (course-admin prepare.R, run by the runner job ppol6818-extracts).
 # An expired extract still reads "completed" but has no download links; it is
 # skipped here without a warning.
 find_extract <- function(hash, how_many = 200) {
@@ -76,7 +76,7 @@ ipums_get <- function(name, samples, variables, ..., dir = "data/ipums") {
                                       variables = variables, data_format = "csv", ...)
   hash <- extract_hash(def)
   if (isTRUE(getOption("ppol6818.ipums_prepare"))) {
-    # The course's preparation run (course-admin, prepare_extracts): make
+    # The course's preparation run (course-admin prepare.R): make
     # sure a downloadable extract exists on the course account, and stop.
     def$description <- sprintf("ppol6818 %s [%s]", name, hash)
     ext <- find_extract(hash)
