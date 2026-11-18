@@ -22,12 +22,27 @@ ipums_dir <- function(dir) {
   normalizePath(dir)
 }
 
-# A short fingerprint of the definition, independent of its description.
+# A short fingerprint of what the definition asks IPUMS for: the collection,
+# samples, variables with their case selections, and format, leaving out its
+# description and submission state. It is taken from the definition's own
+# fields, not from ipumsr's JSON writer, so the course's preparation run and
+# every student's codespace find the same extract whatever ipumsr version each
+# has (fields left empty are dropped, so an ipumsr that adds an empty field
+# changes nothing). Names, and the values of a field, are sorted, so the order
+# samples or variables are listed in does not matter either.
 extract_hash <- function(def) {
-  def$description <- "ppol6818"
+  clean <- function(x) {
+    if (is.list(x)) {
+      x <- lapply(unclass(x), clean)
+      x <- x[!vapply(x, function(v) is.null(v) || length(v) == 0, logical(1))]
+      if (!is.null(names(x))) x <- x[order(names(x))]
+      x
+    } else if (is.character(x)) sort(unclass(x)) else unclass(x)
+  }
+  spec <- unclass(def)[setdiff(names(def), c("description", "submitted", "download_links", "number", "status"))]
   f <- tempfile(fileext = ".json")
   on.exit(unlink(f))
-  ipumsr::save_extract_as_json(def, f)
+  writeLines(jsonlite::toJSON(clean(spec), auto_unbox = TRUE, digits = NA), f)
   substr(unname(tools::md5sum(f)), 1, 10)
 }
 

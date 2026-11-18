@@ -25,4 +25,10 @@ cat("key in a course repository:", out, "\n")
 stopifnot(identical(tail(out, 1), "test-key"))
 res <- ppol6818::check()
 stopifnot(isTRUE(res[["Programs installed"]]$ok), isTRUE(res[["Course folder"]]$ok))
+# An extract's fingerprint is the same under any ipumsr version, so the
+# course's prepared extract (made in the course image) matches every copy:
+# the week 2 lab's definition, as course-admin's labs/week-02/data.R has it.
+w2 <- ipumsr::define_extract_micro("usa", description = "x", samples = sprintf("us%da", 2010:2019),
+  variables = c("STATEFIP", "PUMA", "CPUMA0010", "AGE", "HCOVANY", "HINSCAID", "EMPSTAT"), data_format = "csv")
+stopifnot(identical(ppol6818:::extract_hash(w2), "91668d5271"))
 cat("Installer test passed\n")
