@@ -110,6 +110,13 @@ setup_kobo <- function() {
 setup_ipums <- function() {
   r <- check_ipums()
   if (r$ok) return(invisible())
+  # As with KoboToolbox, a codespace uses the course's IPUMS account, whose
+  # key reaches it as an organization Codespaces secret.
+  if (in_codespace()) {
+    tell("IPUMS", paste("The course's IPUMS key did not reach this codespace.",
+                        "You do not need an IPUMS account of your own: tell Sifat, and carry on with setup."))
+    return(invisible())
+  }
   if (!grepl("not registered", r$detail)) {
     account_first("IPUMS USA", links$ipums_signup)
     utils::browseURL(links$ipums_keys)

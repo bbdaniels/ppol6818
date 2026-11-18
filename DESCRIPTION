@@ -6,7 +6,8 @@ Description: Checks a student's sign-ins for GitHub, Codex, KoboToolbox and
     IPUMS, sends the student to the right sign-up or key page when one is
     missing, connects Codex, the course AI agent, to the student's RStudio
     session, opens it inside RStudio, and reads and deploys KoboToolbox
-    forms from R.
+    forms from R, and gets IPUMS USA extracts as Parquet files read
+    through DuckDB.
 License: MIT
 Encoding: UTF-8
-Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, ellmer, writexl
+Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, ellmer, writexl, DBI, duckdb

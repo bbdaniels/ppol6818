@@ -88,7 +88,8 @@ checks <- list(
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
   "Agent connected to RStudio" = check_console_agent,
-  "Course organization" = function() check_course()
+  "Course organization" = function() check_course(),
+  "Course data" = function() check_data()
 )
 
 #' Print a pass or fail line for every course requirement.
