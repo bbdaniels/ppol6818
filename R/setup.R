@@ -90,6 +90,14 @@ kobo_token_from_password <- function() {
 
 setup_kobo <- function() {
   if (check_kobo()$ok) return(invisible())
+  # In a codespace the course's own KoboToolbox account serves every pair:
+  # its key reaches each codespace as an organization Codespaces secret, so
+  # students need no KoboToolbox account of their own.
+  if (in_codespace()) {
+    tell("KoboToolbox", paste("The course's KoboToolbox key did not reach this codespace.",
+                              "You do not need a KoboToolbox account of your own: tell Sifat, and carry on with setup."))
+    return(invisible())
+  }
   account_first("KoboToolbox", links$kobo_signup)
   tok <- kobo_token_from_password()
   if (!nzchar(tok)) {

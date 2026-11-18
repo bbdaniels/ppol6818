@@ -58,11 +58,89 @@ clone_course_repos <- function() {
   cloned
 }
 
-#' Accept course invitations and clone new course repositories.
+# The browser path: each student has one codespace, created on their lab
+# repository (lab-<username>), and their pair's project repository is cloned
+# beside it, at /workspaces/<project>. The lab repository's devcontainer asks
+# for write access to the course's repositories (customizations.codespaces.
+# repositories, ppol-6818-2027/*), which the student authorizes once when the
+# codespace is created; GitHub's git credential then reaches the project
+# repository. course/project in the lab repository names the project
+# repository; the course writes it when pairs are formed.
+git_run <- function(dir, args, timeout = 120) run_tool("git", c("-C", dir, args), timeout = timeout)
+
+# Bring a repository up to date with GitHub: the student's own commits are
+# replayed on top and uncommitted edits kept. On a conflict nothing changes.
+pull_repo <- function(dir) {
+  r <- git_run(dir, c("pull", "--rebase", "--autostash", "--quiet"))
+  if (r$status != 0) {
+    git_run(dir, c("rebase", "--abort"))
+    return(list(ok = FALSE, detail = r$out))
+  }
+  list(ok = TRUE, detail = "")
+}
+
+codespace_repo <- function() {
+  repo <- Sys.getenv("GITHUB_REPOSITORY")
+  if (!nzchar(repo)) return(list(name = "", dir = getwd()))
+  list(name = basename(repo), dir = file.path(course_dir(), basename(repo)))
+}
+
+# The project repository named in the lab repository's course/project file.
+pair_repo <- function(lab_dir = codespace_repo()$dir) {
+  f <- file.path(lab_dir, "course", "project")
+  if (!file.exists(f)) return("")
+  trimws(readLines(f, n = 1, warn = FALSE))
+}
+
+# RStudio's Projects menu (top right) lists these, so the student switches
+# between the lab and the pair project in one click.
+remember_projects <- function(dirs) {
+  rproj <- unlist(lapply(dirs, function(d) Sys.glob(file.path(d, "*.Rproj"))))
+  if (!length(rproj)) return(invisible())
+  f <- path.expand("~/.local/share/rstudio/monitored/lists/project_mru")
+  dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+  old <- if (file.exists(f)) readLines(f, warn = FALSE) else character()
+  writeLines(unique(c(rproj, old)), f)
+  invisible()
+}
+
+sync_codespace <- function() {
+  lab <- codespace_repo()
+  out <- list(pulled = character(), cloned = character(), problems = character())
+  if (dir.exists(file.path(lab$dir, ".git"))) {
+    r <- pull_repo(lab$dir)
+    if (r$ok) out$pulled <- lab$name
+    else out$problems <- c(out$problems, paste0(lab$name, ": could not bring in the latest course files, because your changes clash with them. Ask the agent to run `git pull --rebase` in ", lab$dir, " and resolve it with you."))
+  }
+  proj <- pair_repo(lab$dir)
+  if (nzchar(proj)) {
+    dest <- file.path(course_dir(), proj)
+    if (!dir.exists(dest)) {
+      r <- run_tool("git", c("clone", "--quiet", paste0("https://github.com/", course_org, "/", proj, ".git"), dest), timeout = 300)
+      if (r$status == 0) out$cloned <- proj
+      else out$problems <- c(out$problems, paste0(
+        "Your pair's repository, ", proj, ", could not be opened in this codespace. ",
+        "This happens when the codespace was created without clicking Authorize and continue. ",
+        "Commit and push your work, delete this codespace at https://github.com/codespaces, ",
+        "then open RStudio again from Canvas and click Authorize and continue."))
+    } else {
+      r <- pull_repo(dest)
+      if (r$ok) out$pulled <- c(out$pulled, proj)
+      else out$problems <- c(out$problems, paste0(proj, ": could not bring in your partner's latest work, because it clashes with your changes. Ask the agent to run `git pull --rebase` in ", dest, " and resolve it with you."))
+    }
+    remember_projects(c(lab$dir, dest))
+  }
+  for (d in out$cloned) message("Your pair's repository is ready: ", file.path(course_dir(), d), " (Projects menu, top right)")
+  if (length(out$problems)) tell("PPOL 6818", paste(out$problems, collapse = "\n\n"))
+  invisible(out)
+}
+
+#' Accept course invitations and clone new course repositories; in a
+#' codespace, bring the lab and project repositories up to date.
 #' @export
 sync_course <- function() {
-  # A codespace holds one repository and was opened from it on GitHub.
-  if (in_codespace() || !check_github()$ok) return(invisible(list(accepted = character(), cloned = character())))
+  if (in_codespace()) return(sync_codespace())
+  if (!check_github()$ok) return(invisible(list(accepted = character(), cloned = character())))
   acc <- accept_invitations()
   cl <- clone_course_repos()
   for (a in acc) message("Accepted the invitation to ", a)
@@ -80,8 +158,13 @@ check_course <- function() {
   # codespace of the public template, which anyone can open.
   if (in_codespace()) {
     repo <- Sys.getenv("GITHUB_REPOSITORY")
-    if (startsWith(repo, paste0(course_org, "/")) && !(basename(repo) %in% c("template", "pitch-template")))
-      return(list(ok = TRUE, detail = paste("codespace of", repo)))
+    if (startsWith(repo, paste0(course_org, "/")) && !(basename(repo) %in% c("template", "lab-template", "pitch-template"))) {
+      proj <- pair_repo()
+      if (!nzchar(proj)) return(list(ok = TRUE, detail = paste(basename(repo), "(no pair repository yet)")))
+      here <- dir.exists(file.path(course_dir(), proj, ".git"))
+      return(list(ok = here, detail = if (here) paste(basename(repo), "and", proj)
+                  else paste(proj, "not reachable: recreate the codespace and click Authorize and continue")))
+    }
   }
   m <- gh_json(paste0("user/memberships/orgs/", course_org))
   if (is.null(m)) return(list(ok = NA, detail = "not invited yet (expected until you submit this output)"))
