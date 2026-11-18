@@ -38,11 +38,17 @@ ipums_key <- function() {
          else "Click Addins > Course setup.", call. = FALSE)
 }
 
-# A finished extract on the account made from the same definition, if any.
+# A finished extract on the account made from the same definition whose
+# files are still there, if any. IPUMS deletes microdata extract files 72
+# hours after they are made (ipumsr's API article), so the course remakes
+# each lab's extracts the day before the lab (course-admin, prepare_extracts).
+# An expired extract still reads "completed" but has no download links; it is
+# skipped here without a warning.
 find_extract <- function(hash, how_many = 200) {
   hist <- tryCatch(ipumsr::get_extract_history("usa", how_many = how_many), error = function(e) list())
   for (ext in hist) {
-    if (grepl(paste0("[", hash, "]"), ext$description, fixed = TRUE) && ipumsr::is_extract_ready(ext))
+    if (grepl(paste0("[", hash, "]"), ext$description, fixed = TRUE) &&
+        identical(ext$status, "completed") && length(ext$download_links))
       return(ext)
   }
   NULL
@@ -69,6 +75,15 @@ ipums_get <- function(name, samples, variables, ..., dir = "data/ipums") {
   def <- ipumsr::define_extract_micro("usa", description = "ppol6818", samples = samples,
                                       variables = variables, data_format = "csv", ...)
   hash <- extract_hash(def)
+  if (isTRUE(getOption("ppol6818.ipums_prepare"))) {
+    # The course's preparation run (course-admin, prepare_extracts): make
+    # sure a downloadable extract exists on the course account, and stop.
+    def$description <- sprintf("ppol6818 %s [%s]", name, hash)
+    ext <- find_extract(hash)
+    if (is.null(ext)) ext <- ipumsr::wait_for_extract(ipumsr::submit_extract(def), verbose = FALSE)
+    message(sprintf("IPUMS extract '%s' ready on the course account: number %s", name, ext$number))
+    return(invisible(ext))
+  }
   if (file.exists(pq) && file.exists(meta_file) &&
       identical(jsonlite::read_json(meta_file)$hash, hash)) {
     return(invisible(pq))
