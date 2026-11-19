@@ -18,7 +18,49 @@ console <- new.env(parent = emptyenv())
 #' Called from the course .Rprofile in interactive sessions.
 #' @export
 console_attach <- function() {
-  if (interactive() && requireNamespace("mcptools", quietly = TRUE)) mcptools::mcp_session()
+  if (!interactive()) return(invisible())
+  if (in_codespace()) {
+    one_console()
+    start_watch()
+  }
+  if (requireNamespace("mcptools", quietly = TRUE)) mcptools::mcp_session()
+  invisible()
+}
+
+# A codespace has one R console, the newest: it ends the console it replaces.
+# Each window reload opens a new console while the old one goes on running
+# out of sight (VS Code's server keeps a closed window's terminals for
+# hours), and with several consoles open the agent has to ask the student
+# which one is theirs.
+console_pid_file <- "/tmp/ppol6818-console.pid"
+
+one_console <- function() {
+  old <- suppressWarnings(as.integer(readLines(console_pid_file, warn = FALSE)))
+  for (p in old[!is.na(old) & old != Sys.getpid()])
+    if (is_r_process(p)) tools::pskill(p)
+  writeLines(as.character(Sys.getpid()), console_pid_file)
+}
+
+is_r_process <- function(pid) {
+  f <- sprintf("/proc/%d/cmdline", pid)
+  if (!file.exists(f)) return(FALSE)
+  x <- readBin(f, "raw", 4096)
+  x[x == as.raw(0)] <- as.raw(32)
+  grepl("/exec/R ", rawToChar(x), fixed = TRUE)
+}
+
+# The watch (inst/codespace/watch.sh) ends what a closed window left running.
+# It runs from a copy named by its contents, since bash reads a script as it
+# goes and the package is reinstalled at each codespace start.
+start_watch <- function() {
+  src <- system.file("codespace", "watch.sh", package = "ppol6818")
+  if (!nzchar(src) || !nzchar(Sys.which("setsid"))) return(invisible())
+  run <- sprintf("/tmp/ppol6818-watch-%s.sh", substr(unname(tools::md5sum(src)), 1, 8))
+  if (!file.exists(run)) {
+    file.copy(src, run)
+    Sys.chmod(run, "755")
+  }
+  system2("setsid", c("-f", run), stdout = FALSE, stderr = FALSE, wait = FALSE)
   invisible()
 }
 
