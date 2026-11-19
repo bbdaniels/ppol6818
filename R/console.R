@@ -23,6 +23,10 @@ console_attach <- function() {
 }
 
 run_in_console <- function(code) {
+  # mcptools runs a tool in the agent's own server process when it reaches no
+  # session (none open, or several it cannot choose between). Nothing may run
+  # or print there: the server's output is the agent's message channel.
+  if (!interactive()) return(no_console)
   if (isTRUE(console$active))
     return("Earlier code is still running in the Console. Call console_output until it finishes, then send this code again.")
   parsed <- tryCatch(parse(text = code, keep.source = TRUE), error = function(e) e)
@@ -47,6 +51,11 @@ run_in_console <- function(code) {
   utils::flush.console()
   console_output()
 }
+
+no_console <- paste(
+  "No R console is connected, so nothing was run.",
+  "Call list_r_sessions: if it lists several, ask the student which R console they are using (or pick one if they do not mind), call select_r_session with it, then send the code again;",
+  "if it lists none, ask the student to open the R console (the R terminal in VS Code) and try again.")
 
 # Runs the code the agent sent, at the Console; run_in_console sends this call.
 console_run <- function() {
@@ -98,7 +107,10 @@ history_replace <- function(text) {
 }
 
 console_output <- function() {
-  if (is.null(console$file)) return("Nothing has been sent to the Console.")
+  if (!interactive()) return(no_console)
+  # In a VS Code terminal, run_in_console already returned the output; asked
+  # again, give the same output rather than "nothing sent".
+  if (is.null(console$file)) return(console$last %||% "Nothing has been sent to the Console.")
   if (isTRUE(console$active)) {
     # This call runs only while R is idle at the prompt. So if console_run has
     # started (it took the code), it has ended; if it has not started after a
@@ -121,6 +133,7 @@ console_output <- function() {
   out <- paste(out, collapse = "\n")
   if (!nzchar(trimws(out))) out <- "(no printed output)"
   if (length(console$notes)) out <- paste0(out, "\n\n", paste(console$notes, collapse = "\n"))
+  console$last <- out
   out
 }
 
@@ -137,7 +150,7 @@ console_tools <- function() {
         "Run R code in the student's own R session, as if the student ran it:",
         "the code and its output are echoed in the student's R console (VS Code's R terminal, or RStudio's Console),",
         "and the objects it makes stay in that session.",
-        "This is the only way to run R for this course. Then call console_output to read the result.",
+        "This is the only way to run R for this course. It returns what the code printed, or, in RStudio, says it was sent, and then console_output reads the result.",
         "KoboToolbox is reached from R through the course package's kobo_* functions (forms, deploy, replace, submissions, export);",
         "run kobo_help() first to see them and their workflows."),
       arguments = list(code = ellmer::type_string("The R code to run."))),
