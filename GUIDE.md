@@ -8,7 +8,7 @@ Setup has four steps and takes about half an hour, spread over a few days becaus
 
 Use your personal email address for each one, so that you keep the accounts after you leave Georgetown.
 
-- **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and nothing waits for it.
+- **GitHub** (https://github.com/signup). Then add your Georgetown email to your GitHub account as a second address (https://github.com/settings/emails) and apply for GitHub Education (https://github.com/settings/education/benefits) with it; approval can take a few days, and nothing waits for it. Your codespace runs on GitHub's free monthly allowance, which is more than the course needs, and GitHub Education raises it. Do not add a payment method to your GitHub account: without one, GitHub stops a codespace at the free allowance and never charges you. If your account already has one, set a $0 budget for Codespaces at https://github.com/settings/billing/budgets.
 - **An AI agent subscription**, required from the first class: either ChatGPT Plus ($20 a month, https://chatgpt.com/pricing), which runs Codex, or Claude Pro ($20 a month, https://claude.com/pricing), which runs Claude Code. Either one is the course's AI coding agent; you need only one. If you choose ChatGPT, also claim Codex for Students (https://chatgpt.com/codex/students) on the same account with your Georgetown email: it adds extra Codex usage for when you reach Plus's limits.
 
 You do not need an IPUMS or KoboToolbox account: the course has one of each, and its keys reach your codespace by themselves.
