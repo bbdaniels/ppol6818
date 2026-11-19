@@ -23,8 +23,6 @@ console_attach <- function() {
 }
 
 run_in_console <- function(code) {
-  if (!rstudioapi::isAvailable())
-    stop("Not connected to RStudio. Call list_r_sessions, then select_r_session with the RStudio session for this project, and try again.")
   if (isTRUE(console$active))
     return("Earlier code is still running in the Console. Call console_output until it finishes, then send this code again.")
   parsed <- tryCatch(parse(text = code, keep.source = TRUE), error = function(e) e)
@@ -36,8 +34,18 @@ run_in_console <- function(code) {
   console$notes <- character()
   console$active <- TRUE
   console$sent <- Sys.time()
-  rstudioapi::sendToConsole(console_call, execute = TRUE, echo = FALSE, focus = FALSE)
-  "Sent to the RStudio Console. Call console_output to get what it printed."
+  if (rstudioapi::isAvailable()) {
+    rstudioapi::sendToConsole(console_call, execute = TRUE, echo = FALSE, focus = FALSE)
+    return("Sent to the RStudio Console. Call console_output to get what it printed.")
+  }
+  # R in a terminal (VS Code): this call already runs in the student's
+  # session while it waits at the prompt, so the code runs here, echoed in
+  # the terminal in place of the waiting prompt, which is drawn again after it.
+  cat("\r")
+  tryCatch(console_run(), error = function(e) cat("Error:", conditionMessage(e), "\n"))
+  cat(getOption("prompt"))
+  utils::flush.console()
+  console_output()
 }
 
 # Runs the code the agent sent, at the Console; run_in_console sends this call.
@@ -126,8 +134,9 @@ console_tools <- function() {
   list(
     ellmer::tool(run, name = "run_in_console",
       description = paste(
-        "Run R code in the student's RStudio session through the Console, as if the student pressed Run:",
-        "the code is echoed in the Console, objects appear in the Environment pane and plots in the Plots pane.",
+        "Run R code in the student's own R session, as if the student ran it:",
+        "the code and its output are echoed in the student's R console (VS Code's R terminal, or RStudio's Console),",
+        "and the objects it makes stay in that session.",
         "This is the only way to run R for this course. Then call console_output to read the result.",
         "KoboToolbox is reached from R through the course package's kobo_* functions (forms, deploy, replace, submissions, export);",
         "run kobo_help() first to see them and their workflows."),
@@ -179,4 +188,39 @@ setup_console_agent <- function() {
     jsonlite::write_json(cfg, claude_mcp_file(), auto_unbox = TRUE, pretty = TRUE)
   }
   invisible()
+}
+
+# In a codespace the student works in VS Code, where each agent runs in its
+# own VS Code extension, started by VS Code and not by the course, so the
+# connector is registered in each agent's own user settings. A codespace is
+# the course's alone, so every agent session there may reach the R console.
+# The course image's start script runs this at each codespace start.
+#' Register the R console connector with Codex and Claude Code (codespaces).
+#' @export
+connect_agents <- function() {
+  if (!in_codespace()) stop("connect_agents() is for course codespaces; on your own computer agent() connects the agent.")
+  srv <- c(rscript_path(), "-e", "ppol6818::console_server()")
+  done <- character()
+  if (nzchar(find_tool("claude"))) {
+    run_tool("claude", c("mcp", "remove", "-s", "user", "r-console"))
+    r <- run_tool("claude", c("mcp", "add", "-s", "user", "r-console", "--", srv))
+    if (r$status == 0) done <- c(done, "Claude Code")
+    # Its tools only run code in the student's own R console; allowed up
+    # front, since otherwise Claude Code asks before every call.
+    f <- file.path(home_dir(), ".claude", "settings.json")
+    cfg <- if (file.exists(f)) jsonlite::read_json(f) else list()
+    allow <- unlist(cfg$permissions$allow)
+    if (!"mcp__r-console" %in% allow) {
+      cfg$permissions$allow <- as.list(c(allow, "mcp__r-console"))
+      dir.create(dirname(f), showWarnings = FALSE, recursive = TRUE)
+      jsonlite::write_json(cfg, f, auto_unbox = TRUE, pretty = TRUE)
+    }
+  }
+  if (nzchar(find_tool("codex"))) {
+    run_tool("codex", c("mcp", "remove", "r-console"))
+    r <- run_tool("codex", c("mcp", "add", "r-console", "--", srv))
+    if (r$status == 0) done <- c(done, "Codex")
+  }
+  message("R console connector registered for: ", if (length(done)) paste(done, collapse = ", ") else "no agent")
+  invisible(done)
 }

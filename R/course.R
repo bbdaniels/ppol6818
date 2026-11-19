@@ -122,7 +122,7 @@ sync_codespace <- function() {
         "Your pair's repository, ", proj, ", could not be opened in this codespace. ",
         "This happens when the codespace was created without clicking Authorize and continue. ",
         "Commit and push your work, delete this codespace at https://github.com/codespaces, ",
-        "then open RStudio again from Canvas and click Authorize and continue."))
+        "then open your codespace again from Canvas and click Authorize and continue."))
     } else {
       r <- pull_repo(dest)
       if (r$ok) out$pulled <- c(out$pulled, proj)
@@ -130,7 +130,8 @@ sync_codespace <- function() {
     }
     remember_projects(c(lab$dir, dest))
   }
-  for (d in out$cloned) message("Your pair's repository is ready: ", file.path(course_dir(), d), " (Projects menu, top right)")
+  where <- if (rstudioapi::isAvailable()) " (Projects menu, top right)" else " (in the file list on the left)"
+  for (d in out$cloned) message("Your pair's repository is ready: ", file.path(course_dir(), d), where)
   if (length(out$problems)) tell("PPOL 6818", paste(out$problems, collapse = "\n\n"))
   invisible(out)
 }

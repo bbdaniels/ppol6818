@@ -144,10 +144,11 @@ setup <- function() {
   migrate_keys()
   load_keys()
   setup_github()
-  setup_agent()
+  # In a codespace each agent signs in in its own panel in VS Code.
+  if (!in_codespace()) setup_agent()
   setup_kobo()
   setup_ipums()
-  setup_console_agent()
+  if (in_codespace()) connect_agents() else setup_console_agent()
   sync_course()
   invisible(check())
 }

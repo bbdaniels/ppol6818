@@ -44,19 +44,29 @@ agent <- function() {
   invisible()
 }
 
-# The working layout when RStudio opens a course project: the project's run.R
-# in the editor above, the agent in the Terminal below. Only on a fresh RStudio
-# session: after an R restart the earlier Terminal is still running the agent.
+# The working layout when a course project opens: the newest run.R in the
+# editor and the agent beside it. In RStudio (the student's own computer) the
+# agent runs in the Terminal below; only on a fresh RStudio session, since
+# after an R restart the earlier Terminal is still running the agent. In VS
+# Code (a codespace) R runs in the terminal below the editor and the agent has
+# its own panel, so only run.R is opened, through VS Code's command line.
 open_workspace <- function(newSession = TRUE) {
-  if (!isTRUE(newSession) || !rstudioapi::isAvailable()) return(invisible())
+  if (!isTRUE(newSession)) return(invisible())
+  rstudio <- rstudioapi::isAvailable()
+  vscode <- nzchar(Sys.getenv("VSCODE_IPC_HOOK_CLI")) && nzchar(Sys.which("code"))
+  if (!rstudio && !vscode) return(invisible())
   # The course folder has its own run.R since this version; add it to older ones.
   if (!file.exists("run.R") && normalizePath(getwd(), mustWork = FALSE) == normalizePath(course_dir(), mustWork = FALSE))
     file.copy(system.file("project", "run.R", package = "ppol6818"), "run.R")
   # A lab repository has a folder a week (week-01, week-02, ...): open the
   # newest week's run.R.
   week <- utils::tail(sort(Sys.glob("week-[0-9][0-9]/run.R")), 1)
-  if (file.exists("run.R")) rstudioapi::navigateToFile("run.R")
-  else if (length(week)) rstudioapi::navigateToFile(week)
+  file <- if (file.exists("run.R")) "run.R" else if (length(week)) week else character()
+  if (vscode) {
+    if (length(file)) system2("code", c("--reuse-window", shQuote(normalizePath(file))), wait = FALSE)
+    return(invisible())
+  }
+  if (length(file)) rstudioapi::navigateToFile(file)
   if (is.na(course_agent())) return(invisible())
   agent()
 }

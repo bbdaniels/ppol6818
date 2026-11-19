@@ -24,14 +24,15 @@ check_tools <- function() {
 
 check_github <- function() {
   if (run_tool("gh", c("auth", "status"))$status != 0)
-    return(list(ok = FALSE, detail = if (in_codespace()) "the codespace's GitHub sign-in did not reach R; reload RStudio" else "not signed in"))
+    return(list(ok = FALSE, detail = if (in_codespace()) "the codespace's GitHub sign-in did not reach R; reload the window" else "not signed in"))
   user <- run_tool("gh", c("api", "user", "--jq", ".login"))
   list(ok = user$status == 0, detail = trimws(user$out))
 }
 
 check_agent <- function() {
   id <- course_agent()
-  if (is.na(id)) return(list(ok = FALSE, detail = "not signed in to Codex or Claude Code"))
+  if (is.na(id)) return(list(ok = FALSE, detail = if (in_codespace())
+    "not signed in: sign in to Codex or Claude Code in the agent panel on the right" else "not signed in to Codex or Claude Code"))
   list(ok = TRUE, detail = paste(agents[[id]]$name, "signed in"))
 }
 
@@ -54,10 +55,15 @@ check_ipums <- function() {
   list(ok = TRUE, detail = "key works")
 }
 
-# The connector that lets the agent run code in the RStudio session, which
-# agent() passes on the command line (R/console.R).
+# The connector that lets the agent run code in the student's R session:
+# in a codespace registered in each agent's settings (connect_agents), on the
+# student's own computer passed on the command line by agent() (R/console.R).
 has_connector <- function(id) {
   if (!file.exists(rscript_path()) || !requireNamespace("mcptools", quietly = TRUE)) return(FALSE)
+  if (in_codespace()) {
+    r <- run_tool(id, c("mcp", "get", "r-console"))
+    return(r$status == 0)
+  }
   if (id == "codex") return(TRUE)
   cfg <- tryCatch(jsonlite::fromJSON(claude_mcp_file(), simplifyVector = FALSE), error = function(e) NULL)
   identical(cfg$mcpServers$rstudio$command, rscript_path())
@@ -67,7 +73,7 @@ check_console_agent <- function() {
   id <- course_agent()
   if (is.na(id)) return(list(ok = FALSE, detail = "no agent signed in"))
   ok <- has_connector(id)
-  list(ok = ok, detail = paste("rstudio connector", if (ok) "set up in" else "missing from", agents[[id]]$name))
+  list(ok = ok, detail = paste("R console connector", if (ok) "set up in" else "missing from", agents[[id]]$name))
 }
 
 check_folder <- function() {
@@ -87,7 +93,7 @@ checks <- list(
   "AI agent sign-in" = check_agent,
   "KoboToolbox key" = check_kobo,
   "IPUMS key" = check_ipums,
-  "Agent connected to RStudio" = check_console_agent,
+  "Agent connected to R" = check_console_agent,
   "Course organization" = function() check_course(),
   "Course data" = function() check_data()
 )
@@ -101,6 +107,7 @@ check <- function() {
   for (n in names(res)) cat(sprintf("  %-34s %s  %s\n", n, mark(res[[n]]$ok), res[[n]]$detail))
   ok <- !any(vapply(res, function(r) isFALSE(r$ok), TRUE))
   cat(if (ok) "\nEverything passes. Submit this output on Canvas.\n"
+      else if (in_codespace()) "\nSomething failed. Run ppol6818::setup() in the R console to fix it.\n"
       else "\nSomething failed. Click Addins > Course setup to fix it.\n")
   invisible(res)
 }
