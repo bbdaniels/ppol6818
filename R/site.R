@@ -37,23 +37,17 @@ pull_partner <- function(dir = ".") {
     message("No GitHub copy to pull from: building the files as they are here.")
     return(invisible(FALSE))
   }
-  stashes <- function() git_run(dir, c("stash", "list"))$out
-  before <- stashes()
   r <- pull_repo(dir)
+  if (r$stash)
+    stop("Your partner's latest work is in, but it clashes with changes you had not committed",
+         if (nzchar(r$clash)) paste0(", in ", r$clash), ". ",
+         "Git kept your changes safe in its stash. Ask the agent to resolve the clash with you, then build again.", call. = FALSE)
   if (!r$ok) {
     if (grepl("conflict|could not apply", r$detail, ignore.case = TRUE))
       stop("Your partner's latest work clashes with your changes, so the build stopped. Nothing was changed. ",
            "Ask the agent to run `git pull --rebase` and resolve it with you, then build again.", call. = FALSE)
     stop("Could not bring in your partner's latest work, so the build stopped. Git said:\n", r$detail,
          "\nCheck your connection and build again.", call. = FALSE)
-  }
-  # When uncommitted edits clash with the pulled work, git keeps them in its
-  # stash and marks the clash in the files.
-  if (!identical(stashes(), before)) {
-    clash <- git_run(dir, c("diff", "--name-only", "--diff-filter=U"))$out
-    stop("Your partner's latest work is in, but it clashes with changes you had not committed",
-         if (nzchar(clash)) paste0(", in ", gsub("\n", ", ", clash)), ". ",
-         "Git kept your changes safe in its stash. Ask the agent to resolve the clash with you, then build again.", call. = FALSE)
   }
   invisible(TRUE)
 }

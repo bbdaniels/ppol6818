@@ -69,14 +69,38 @@ clone_course_repos <- function() {
 git_run <- function(dir, args, timeout = 120) run_tool("git", c("-C", dir, args), timeout = timeout)
 
 # Bring a repository up to date with GitHub: the student's own commits are
-# replayed on top and uncommitted edits kept. On a conflict nothing changes.
+# replayed on top and uncommitted edits kept. Three outcomes:
+# - ok: up to date, edits kept.
+# - a clash between commits (stash = FALSE): the rebase is undone, nothing
+#   changes.
+# - a clash between the pulled work and uncommitted edits (stash = TRUE): git
+#   pulls, then cannot put the edits back cleanly, so it keeps them in its
+#   stash and marks the clash in the files (`clash` names them). Git reports
+#   success here, so the stash list is compared before and after.
 pull_repo <- function(dir) {
+  stashes <- function() git_run(dir, c("stash", "list"))$out
+  before <- stashes()
   r <- git_run(dir, c("pull", "--rebase", "--autostash", "--quiet"))
   if (r$status != 0) {
     git_run(dir, c("rebase", "--abort"))
-    return(list(ok = FALSE, detail = r$out))
+    return(list(ok = FALSE, stash = FALSE, detail = r$out, clash = ""))
   }
-  list(ok = TRUE, detail = "")
+  if (!identical(stashes(), before)) {
+    clash <- git_run(dir, c("diff", "--name-only", "--diff-filter=U"))$out
+    return(list(ok = FALSE, stash = TRUE, detail = r$out, clash = gsub("\n", ", ", trimws(clash))))
+  }
+  list(ok = TRUE, stash = FALSE, detail = "", clash = "")
+}
+
+# What to tell the student when pull_repo did not finish cleanly; `whose` is
+# "the latest course files" or "your partner's latest work".
+pull_problem <- function(r, name, dir, whose) {
+  if (r$stash)
+    return(paste0(name, ": ", whose, " is in, but it clashes with changes you had not committed",
+                  if (nzchar(r$clash)) paste0(", in ", r$clash), ". Git kept your changes safe in its stash. ",
+                  "Ask the agent to resolve the clash with you in ", dir, "."))
+  paste0(name, ": could not bring in ", whose, ", because it clashes with your changes. ",
+         "Nothing was changed. Ask the agent to run `git pull --rebase` in ", dir, " and resolve it with you.")
 }
 
 codespace_repo <- function() {
@@ -110,7 +134,7 @@ sync_codespace <- function() {
   if (dir.exists(file.path(lab$dir, ".git"))) {
     r <- pull_repo(lab$dir)
     if (r$ok) out$pulled <- lab$name
-    else out$problems <- c(out$problems, paste0(lab$name, ": could not bring in the latest course files, because your changes clash with them. Ask the agent to run `git pull --rebase` in ", lab$dir, " and resolve it with you."))
+    else out$problems <- c(out$problems, pull_problem(r, lab$name, lab$dir, "the latest course files"))
   }
   proj <- pair_repo(lab$dir)
   if (nzchar(proj)) {
@@ -126,7 +150,7 @@ sync_codespace <- function() {
     } else {
       r <- pull_repo(dest)
       if (r$ok) out$pulled <- c(out$pulled, proj)
-      else out$problems <- c(out$problems, paste0(proj, ": could not bring in your partner's latest work, because it clashes with your changes. Ask the agent to run `git pull --rebase` in ", dest, " and resolve it with you."))
+      else out$problems <- c(out$problems, pull_problem(r, proj, dest, "your partner's latest work"))
     }
     remember_projects(c(lab$dir, dest))
   }

@@ -85,6 +85,15 @@ writeLines("student 2", file.path(A, "exhibits/week02.png"))
 stops_with(ns$pull_partner(A), "Git kept your changes safe in its stash")
 stopifnot(grepl("student 2", git(A, "stash", "show", "-p")))
 
+# The codespace sync reads the same outcome from pull_repo: a stashed edit is
+# a problem to tell the student, not a clean pull.
+git(A, "reset", "-q", "--hard"); git(A, "stash", "drop", "-q")
+writeLines("partner 3", file.path(B, "exhibits/week02.png")); git(B, "commit", "-qam", "B3"); git(B, "push", "-q")
+writeLines("student 3", file.path(A, "exhibits/week02.png"))
+r <- ns$pull_repo(A)
+stopifnot(!r$ok, r$stash, r$clash == "exhibits/week02.png")
+stopifnot(grepl("Git kept your changes safe in its stash", ns$pull_problem(r, "A", A, "your partner's latest work"), fixed = TRUE))
+
 setwd(owd)
 unlink(tmp, recursive = TRUE)
 cat("Site tests passed\n")
