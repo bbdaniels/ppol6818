@@ -83,7 +83,7 @@ start_watch <- function() {
   invisible()
 }
 
-run_in_console <- function(code) {
+run_in_console <- function(code, folder = NULL) {
   # mcptools runs a tool in the agent's own server process when it reaches no
   # session (none open, or several it cannot choose between). Nothing may run
   # or print there: the server's output is the agent's message channel.
@@ -93,8 +93,11 @@ run_in_console <- function(code) {
   parsed <- tryCatch(parse(text = code, keep.source = TRUE), error = function(e) e)
   if (inherits(parsed, "error"))
     return(paste("The code was not run: it does not parse.", conditionMessage(parsed)))
+  if (!is.null(folder) && nzchar(folder) && !dir.exists(folder))
+    return(paste("The code was not run: there is no folder", folder))
   console$code <- parsed
   console$text <- code
+  console$dir <- if (!is.null(folder) && nzchar(folder)) folder
   console$file <- tempfile(fileext = ".txt")
   console$notes <- character()
   console$active <- TRUE
@@ -118,6 +121,12 @@ console_run <- function() {
   if (!isTRUE(console$active) || is.null(console$code)) return(invisible())
   code <- console$code
   console$code <- NULL
+  # The repository the agent works in: its code runs there, then the
+  # console's own folder comes back.
+  if (!is.null(console$dir)) {
+    here <- setwd(console$dir)
+    on.exit(setwd(here), add = TRUE)
+  }
   devices <- grDevices::dev.list()
   failed <- FALSE
   sink(console$file, split = TRUE)
@@ -182,7 +191,7 @@ console_output <- function() {
 # session. These wrappers only call the package installed in the session, so
 # an updated package takes effect when R restarts, without restarting the agent.
 console_tools <- function() {
-  run <- function(code) ppol6818:::run_in_console(code)
+  run <- function(code, folder = NULL) ppol6818:::run_in_console(code, folder)
   output <- function() ppol6818:::console_output()
   environment(run) <- environment(output) <- baseenv()
   list(
@@ -194,7 +203,12 @@ console_tools <- function() {
         "This is the only way to run R for this course. It returns what the code printed, with any messages, warnings and errors.",
         "KoboToolbox is reached from R through the course package's kobo_* functions (forms, deploy, replace, submissions, export);",
         "run kobo_help() first to see them and their workflows."),
-      arguments = list(code = ellmer::type_string("The R code to run."))),
+      arguments = list(
+        code = ellmer::type_string("The R code to run."),
+        folder = ellmer::type_string(paste(
+          "The folder the code runs in, as a full path: the repository you are working in (for example /workspaces/<repository>).",
+          "Give it whenever the code reads or writes files by relative paths, since the console may sit in another course repository;",
+          "the console's own folder comes back afterwards."), required = FALSE))),
     ellmer::tool(output, name = "console_output",
       description = paste(
         "Return again what the code last sent with run_in_console printed in the R console, with any messages, warnings and errors."),
