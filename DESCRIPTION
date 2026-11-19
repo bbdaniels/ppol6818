@@ -1,6 +1,6 @@
 Package: ppol6818
 Title: Course Setup and AI Agent Launcher for PPOL 6818
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: person("Benjamin", "Daniels", role = c("aut", "cre"), email = "bd581@georgetown.edu")
 Description: Checks a student's sign-ins for GitHub, the course AI agents,
     KoboToolbox and IPUMS, connects Claude Code and Codex to the student's
