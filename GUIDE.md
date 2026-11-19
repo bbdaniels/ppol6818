@@ -29,9 +29,9 @@ Within a few days GitHub emails you an invitation to the course organization, `p
 
 ## 4. Create your codespace
 
-Open your lab repository at `https://github.com/ppol-6818-2027/lab-<your username>`. Click the green **Code** button, the **Codespaces** tab, and **Create codespace on main**.
+Once you have accepted the invitation, click **Launch codespace** on the Canvas home page. The first time, GitHub asks you to authorize **PPOL 6818 codespace link**, which only reads your username: click **Authorize**. GitHub then says "No codespace to resume": click **Create new codespace**. (If you click it before your lab repository is ready or before you have accepted the invitation, a page says what to do first.)
 
-GitHub then asks to give this codespace access to the other repositories in `ppol-6818-2027`. Click **Authorize and continue**: that is how your pair's project repository opens beside your lab repository later in the term. If you skipped it, delete the codespace at https://github.com/codespaces and create it again.
+GitHub then asks to give this codespace access to the other repositories in `ppol-6818-2027`. Click **Authorize and continue**: that is how your pair's project repository opens beside your lab repository later in the term. If you skipped it, delete the codespace at https://github.com/codespaces and click **Launch codespace** again.
 
 Your browser then asks to open VS Code: allow it. The first time, VS Code asks you to sign in to GitHub; click **Allow**, sign in in the browser, and come back. VS Code connects to the codespace, which takes a minute or two the first time. When it asks "Do you trust the authors of the files in this folder?", click **Trust Folder & Continue**: the files are the course's and yours, and VS Code asks only once. It opens in three columns: your files on the left, `run.R` above the R console in the middle, and the agent on the right.
 
@@ -55,11 +55,11 @@ PPOL 6818 setup check
 
 Copy the whole check into the **Setup check** assignment on Canvas. If any line says FAIL, click **Course setup** again, and bring the check to Sifat's lab session or office hours if it fails again. To print the check again at any time, click **Check** in the PPOL 6818 section, or run `ppol6818::check()` in the R console.
 
-If the browser shows "localhost refused to connect" when you sign in to the agent, you are in VS Code in the browser rather than on your computer: go back to step 3, set the editor preference, and open the codespace again from https://github.com/codespaces.
+If the browser shows "localhost refused to connect" when you sign in to the agent, you are in VS Code in the browser rather than on your computer: go back to step 3, set the editor preference, and click **Launch codespace** on Canvas again.
 
 ## Coming back
 
-Click **Open the codespace** on the Canvas home page. It opens https://github.com/codespaces, the list of your codespaces; click yours and it opens in VS Code where you left it. (In VS Code itself, the **Remote Explorer** in the left sidebar lists it too.) Keep this one codespace all term: when pairs are formed, your pair's project repository appears beside your lab repository in it, in the same file list.
+Click **Launch codespace** on the Canvas home page: it opens your codespace in VS Code where you left it. (In VS Code itself, the **Remote Explorer** in the left sidebar lists it too.) Keep this one codespace all term: when pairs are formed, your pair's project repository appears beside your lab repository in it, in the same file list.
 
 When you quit VS Code, the codespace stops by itself about half an hour later and keeps your files. GitHub deletes a codespace after 30 days unused, so push your work to GitHub before you leave it. GitHub's free allowance covers about 60 hours a month in the course codespace, and about 90 with GitHub Education, and its storage allowance (15 GB a month, or 20 with GitHub Education) holds one course codespace: do not create a second one, and delete any old one at https://github.com/codespaces.
 
