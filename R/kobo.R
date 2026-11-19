@@ -5,6 +5,44 @@
 # connector registered with the agent. The key is KOBO_API_TOKEN, which the
 # course project loads from the course folder's .Renviron.
 
+# The course shares one KoboToolbox account, so every form a student deploys
+# carries its maker in its name: "<name> (<GitHub user>, <repository>)". The
+# form lists show a student's own forms first, and replacing or deleting a form
+# made from another student's repository stops unless asked for by name.
+
+# Who is calling: the GitHub user and repository a codespace sets, or, outside
+# a codespace, the system user and the current folder's name.
+kobo_maker <- function() {
+  user <- Sys.getenv("GITHUB_USER", Sys.getenv("USER", "unknown"))
+  repo <- basename(Sys.getenv("GITHUB_REPOSITORY", getwd()))
+  list(user = user, repo = repo, tag = sprintf("(%s, %s)", user, repo))
+}
+
+# The maker a form's name carries, or NULL for a form named without one.
+form_maker <- function(name) {
+  m <- regmatches(name, regexec("\\(([^,()]+), ([^,()]+)\\)$", name))[[1]]
+  if (length(m) == 3) list(user = m[2], repo = m[3])
+}
+
+# A form is a student's own when they made it or it came from their
+# repository (their partner's, in a pair repository).
+is_mine <- function(name, me = kobo_maker()) {
+  vapply(name, function(n) {
+    f <- form_maker(n %||% "")
+    !is.null(f) && (f$user == me$user || f$repo == me$repo)
+  }, TRUE, USE.NAMES = FALSE)
+}
+
+# Stop before changing a form that is not the caller's own, unless they named
+# it as someone else's on purpose.
+check_mine <- function(uid, verb, others) {
+  if (isTRUE(others)) return(invisible())
+  name <- kobo_request(paste0("/api/v2/assets/", uid, "/"), query = list(format = "json"))$name %||% ""
+  if (!is_mine(name))
+    stop(sprintf("The form %s (\"%s\") was not made from your repository, %s. The course shares one KoboToolbox account, so check it is the right form; to %s it anyway, add others = TRUE.",
+                 uid, name, kobo_maker()$repo, verb), call. = FALSE)
+}
+
 xlsx_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 kobo_token <- function() {
@@ -89,11 +127,14 @@ kobo_help <- function(topic = "overview") {
 kobo_workflows <- list(
   overview = "KoboToolbox from R (package ppol6818). Your key loads with the course project.
 
-  kobo_forms(search)              Your survey forms: uid, name, status, submission count.
+  The course shares one KoboToolbox account: each form's name ends with who
+  made it, (GitHub user, repository), and your own forms come first.
+
+  kobo_forms(search)              The survey forms, yours first: uid, name, status, submissions, mine.
   kobo_form(uid)                  One form, with its questions and choices (content).
   kobo_resolve(url)               The form behind a web form link (ee.kobotoolbox.org/...).
   kobo_download_form(uid, path)   Save a form as an XLSForm (.xlsx) to edit.
-  kobo_deploy(path, name)         Upload a NEW XLSForm and make it live; returns its web link.
+  kobo_deploy(path, name)         Upload a NEW XLSForm and make it live, named as yours; returns its web link.
   kobo_replace(uid, path)         Replace a live form's XLSForm, keeping its uid and submissions.
   kobo_submissions(uid, ...)      Submissions as a data frame (limit, start, query).
   kobo_export(uid, type, path)    Export all submissions to a CSV or XLS file.
@@ -132,14 +173,19 @@ Mark test or bad submissions instead of deleting them:
                          kobo_validate(uid, d$`_id`[1:2], \"not_approved\")"
 )
 
-#' Your KoboToolbox survey forms.
+#' The KoboToolbox survey forms, your own first.
 #' @param search Text to search form names for; all forms when omitted.
-#' @return A data frame with one row per form.
+#' @param mine Only your own forms (made by you or from your repository).
+#' @return A data frame with one row per form; the column `mine` marks your own.
 #' @export
-kobo_forms <- function(search = NULL) {
+kobo_forms <- function(search = NULL, mine = FALSE) {
   a <- kobo_all("/api/v2/assets/", list(q = surveys_query(search)))
-  if (!length(a)) return(asset_row(list())[0, ])
-  do.call(rbind, lapply(a, asset_row))
+  d <- if (length(a)) do.call(rbind, lapply(a, asset_row)) else asset_row(list())[0, ]
+  d$mine <- is_mine(d$name)
+  d <- d[order(!d$mine, d$name), , drop = FALSE]
+  if (mine) d <- d[d$mine, , drop = FALSE]
+  rownames(d) <- NULL
+  d
 }
 
 #' One KoboToolbox form, with its questions and choices.
@@ -206,11 +252,13 @@ kobo_import <- function(uid, path) {
 #' To change a form that is already live, use kobo_replace(), which keeps its
 #' uid and submissions.
 #' @param path The XLSForm (.xlsx).
-#' @param name The form's name; the file name when omitted.
+#' @param name The form's name; the file name when omitted. The name gets
+#'   "(GitHub user, repository)" added, since the course shares one account.
 #' @return A list with the form's uid, name, web_link (for respondents) and manage_link.
 #' @export
 kobo_deploy <- function(path, name = tools::file_path_sans_ext(basename(path))) {
   if (!file.exists(path)) stop("No file at ", path, call. = FALSE)
+  if (is.null(form_maker(name))) name <- paste(name, kobo_maker()$tag)
   uid <- kobo_request("/api/v2/assets/", "POST", body = list(name = name, asset_type = "survey"))$uid
   # A failed upload would otherwise leave an empty draft form on the account.
   tryCatch(kobo_import(uid, path), error = function(e) {
@@ -225,9 +273,11 @@ kobo_deploy <- function(path, name = tools::file_path_sans_ext(basename(path))) 
 #' Replace a live form's XLSForm, keeping its uid and submissions.
 #' @param uid The form's uid.
 #' @param path The new XLSForm (.xlsx).
+#' @param others TRUE to replace a form not made from your repository.
 #' @return A list with the form's uid, name, submission_count, web_link and manage_link.
 #' @export
-kobo_replace <- function(uid, path) {
+kobo_replace <- function(uid, path, others = FALSE) {
+  check_mine(uid, "replace", others)
   a <- kobo_import(uid, path)
   kobo_request(paste0("/api/v2/assets/", uid, "/deployment/"), "PATCH",
                body = list(active = TRUE, version_id = a$version_id))
@@ -296,8 +346,10 @@ kobo_validate <- function(uid, ids, status = c("approved", "not_approved", "on_h
 
 #' Delete a form and all its submissions, permanently.
 #' @param uid The form's uid.
+#' @param others TRUE to delete a form not made from your repository.
 #' @export
-kobo_delete <- function(uid) {
+kobo_delete <- function(uid, others = FALSE) {
+  check_mine(uid, "delete", others)
   kobo_request(paste0("/api/v2/assets/", uid, "/"), "DELETE")
   message("Deleted the form ", uid)
   invisible(uid)
