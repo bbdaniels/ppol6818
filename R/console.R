@@ -27,26 +27,47 @@ console_attach <- function() {
   invisible()
 }
 
-# A codespace has one R console, the newest: it ends the console it replaces.
-# Each window reload opens a new console while the old one goes on running
-# out of sight (VS Code's server keeps a closed window's terminals for
-# hours), and with several consoles open the agent has to ask the student
-# which one is theirs.
-console_pid_file <- "/tmp/ppol6818-console.pid"
-
+# A codespace has one R console, the newest: each console, as it attaches,
+# ends every other R console in a VS Code terminal. Each window reload opens
+# a new console while the old one goes on running out of sight (VS Code's
+# server keeps a closed window's terminals for hours), and with several
+# consoles open the agent has to ask the student which one is theirs. A lock
+# keeps two consoles attaching at once from ending each other; the later one
+# stays. It ends them outright (SIGKILL): a console still running its
+# .Rprofile does not stop on a polite signal. (Start times cannot decide it: the start script execs R, so a
+# console started first may reach R last.)
 one_console <- function() {
-  old <- suppressWarnings(as.integer(readLines(console_pid_file, warn = FALSE)))
-  for (p in old[!is.na(old) & old != Sys.getpid()])
-    if (is_r_process(p)) tools::pskill(p)
-  writeLines(as.character(Sys.getpid()), console_pid_file)
+  lock <- "/tmp/ppol6818-console.lock"
+  for (i in 1:50) {
+    if (dir.create(lock, showWarnings = FALSE)) break
+    age <- difftime(Sys.time(), file.mtime(lock), units = "secs")
+    if (is.na(age) || age > 10) unlink(lock, recursive = TRUE) else Sys.sleep(0.2)
+  }
+  on.exit(unlink(lock, recursive = TRUE))
+  for (pid in as.integer(grep("^[0-9]+$", dir("/proc"), value = TRUE))) {
+    if (pid == Sys.getpid()) next
+    p <- proc_info(pid)
+    if (is.null(p) || !grepl("/exec/R ", p$cmd, fixed = TRUE)) next
+    parent <- proc_info(p$ppid)
+    if (!is.null(parent) && grepl("--type=ptyHost", parent$cmd, fixed = TRUE)) {
+      ok <- tools::pskill(pid, tools::SIGKILL)
+      cat(format(Sys.time(), "%F %T"), " console ", Sys.getpid(), " ended console ", pid,
+          if (!ok) " (failed)", "\n", sep = "", file = "/tmp/ppol6818-console.log", append = TRUE)
+    }
+  }
+  cat(format(Sys.time(), "%F %T"), " console ", Sys.getpid(), " attached\n", sep = "",
+      file = "/tmp/ppol6818-console.log", append = TRUE)
 }
 
-is_r_process <- function(pid) {
-  f <- sprintf("/proc/%d/cmdline", pid)
-  if (!file.exists(f)) return(FALSE)
-  x <- readBin(f, "raw", 4096)
-  x[x == as.raw(0)] <- as.raw(32)
-  grepl("/exec/R ", rawToChar(x), fixed = TRUE)
+# A process's command line and parent, from /proc; NULL once it has gone.
+proc_info <- function(pid) {
+  tryCatch({
+    x <- readBin(sprintf("/proc/%d/cmdline", pid), "raw", 8192)
+    x[x == as.raw(0)] <- as.raw(32)
+    stat <- readLines(sprintf("/proc/%d/stat", pid), warn = FALSE)
+    f <- strsplit(sub("^.*\\) ", "", stat), " ")[[1]]
+    list(cmd = rawToChar(x), ppid = as.integer(f[2]))
+  }, error = function(e) NULL, warning = function(w) NULL)
 }
 
 # The watch (inst/codespace/watch.sh) ends what a closed window left running.
