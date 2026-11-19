@@ -10,4 +10,4 @@ Description: Checks a student's sign-ins for GitHub, Codex, KoboToolbox and
     through DuckDB.
 License: MIT
 Encoding: UTF-8
-Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, ellmer, writexl, DBI, duckdb
+Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, nanonext, ellmer, writexl, DBI, duckdb

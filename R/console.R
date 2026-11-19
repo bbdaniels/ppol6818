@@ -165,7 +165,46 @@ console_tools <- function() {
 #' The MCP server the course agent starts: the Console tools, plus
 #' mcptools' tools for choosing the RStudio session.
 #' @export
-console_server <- function() mcptools::mcp_server(tools = console_tools())
+console_server <- function() {
+  find_consoles_by_socket()
+  mcptools::mcp_server(tools = console_tools())
+}
+
+# mcptools (1.0.3) finds R sessions by trying slots 1, 2, 3 and so on, and
+# stops at the first empty slot past slot 8. Each session takes the lowest
+# free slot, so after window reloads the student's console can sit at slot 16
+# while slots 9 to 15 have closed, and no agent finds it. This server's own
+# copy of the search tries every slot that has a socket file, and otherwise
+# does what mcptools does.
+find_consoles_by_socket <- function() {
+  ns <- asNamespace("mcptools")
+  if (!is.function(ns$probe_sessions) || !is.function(ns$socket_dir_in_use)) return(invisible())
+  probe <- function() {
+    the <- get("the", envir = asNamespace("mcptools"))
+    socket_dir <- get("socket_dir_in_use", envir = asNamespace("mcptools"))
+    files <- list.files(socket_dir(), pattern = "^mcptools-socket[0-9]+$")
+    slots <- sort(as.integer(sub("^mcptools-socket", "", files)))
+    sock <- nanonext::socket("poly")
+    on.exit(nanonext::reap(sock))
+    cv <- nanonext::cv()
+    monitor <- nanonext::monitor(sock, cv)
+    live <- integer()
+    for (i in slots) {
+      rc <- nanonext::dial(sock, url = sprintf("%s%d", the$socket_url, i), autostart = NA, fail = "none")
+      if (!nanonext::is_error_value(rc)) live <- c(live, i)
+    }
+    pipes <- nanonext::read_monitor(monitor)
+    res <- lapply(pipes, function(x) nanonext::recv_aio(sock, mode = "raw", timeout = 5000L))
+    lapply(pipes, function(x)
+      nanonext::send_aio(sock, mac_seal(serialize(character(), NULL)), mode = "raw", pipe = x))
+    results <- nanonext::collect_aio_(res)
+    replies <- Filter(Negate(is.null), lapply(results, open_reply))
+    list(live = live, sessions = lapply(replies, parse_session_reply))
+  }
+  environment(probe) <- ns
+  utils::assignInNamespace("probe_sessions", probe, ns = "mcptools")
+  invisible()
+}
 
 rscript_path <- function()
   file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
