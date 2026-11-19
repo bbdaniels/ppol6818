@@ -232,7 +232,16 @@ connect_agents <- function() {
   if (nzchar(find_tool("codex"))) {
     run_tool("codex", c("mcp", "remove", "r-console"))
     r <- run_tool("codex", c("mcp", "add", "r-console", "--", srv))
-    if (r$status == 0) done <- c(done, "Codex")
+    if (r$status == 0) {
+      done <- c(done, "Codex")
+      # As for Claude Code, its tools are approved up front, since otherwise
+      # Codex asks before every call (and refuses them in codex exec).
+      f <- file.path(home_dir(), ".codex", "config.toml")
+      x <- readLines(f, warn = FALSE)
+      i <- which(x == "[mcp_servers.r-console]")
+      if (length(i) == 1 && !any(grepl("^default_tools_approval_mode", x)))
+        writeLines(append(x, 'default_tools_approval_mode = "approve"', after = i), f)
+    }
   }
   message("R console connector registered for: ", if (length(done)) paste(done, collapse = ", ") else "no agent")
   invisible(done)
