@@ -33,7 +33,7 @@ Once you have accepted the invitation, click **Launch codespace** on the Canvas 
 
 GitHub then asks to give this codespace access to the other repositories in `ppol-6818-2027`. Click **Authorize and continue**: that is how your pair's project repository opens beside your lab repository later in the term. If you skipped it, delete the codespace at https://github.com/codespaces and click **Launch codespace** again.
 
-Your browser then asks to open VS Code: allow it. The first time, VS Code asks you to sign in to GitHub; click **Allow**, sign in in the browser, and come back. VS Code connects to the codespace, which takes a minute or two the first time. When it asks "Do you trust the authors of the files in this folder?", click **Trust Folder & Continue**: the files are the course's and yours, and VS Code asks only once. It opens in three columns: your files on the left, `run.R` above the R console in the middle, and the agent on the right.
+Your browser then asks to open VS Code: allow it. The first time, VS Code asks you to sign in to GitHub; click **Allow**, sign in in the browser, and come back. VS Code connects to the codespace. The first time takes about five minutes, while GitHub sets up the course software; after that it opens in seconds. When it asks "Do you trust the authors of the files in this folder?", click **Trust Folder & Continue**: the files are the course's and yours, and VS Code asks only once. It opens in three columns: your files on the left, `run.R` above the R console in the middle, and the agent on the right.
 
 ## 5. Sign in to your agent and finish setup
 
