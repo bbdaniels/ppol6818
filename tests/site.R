@@ -46,6 +46,8 @@ stopifnot(isTRUE(ns$check_exhibits(inputs)))
 # A paper page names a PDF the build did not make.
 writeLines(c("---", "title: Registered report", "pdf: midterm.pdf", "---"), "midterm/index.qmd")
 stops_with(ns$check_papers("midterm/index.qmd"), "format: paper-typst` in the front matter of midterm/midterm.qmd")
+dir.create("deck"); writeLines(c("---", "title: Deck", "pdf: ../deck.pdf", "---"), "deck/index.qmd")
+stops_with(ns$check_papers("deck/index.qmd"), "The build made no deck.pdf. Keep the line `format: deck-typst` in the front matter of deck.qmd")
 dir.create("docs/midterm", recursive = TRUE); writeLines("x", "docs/midterm/midterm.pdf")
 stopifnot(isTRUE(ns$check_papers("midterm/index.qmd")))
 unlink("docs", recursive = TRUE)

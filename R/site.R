@@ -2,8 +2,9 @@
 # _quarto.yml) that renders the landing page, the deck and the two papers
 # into docs/, the only folder GitHub Pages publishes. The project lists what
 # it renders: each paper (midterm/midterm.qmd, final/final.qmd) renders to a
-# PDF through the paper-typst format in _extensions/paper/, and its page
-# (midterm/index.qmd, final/index.qmd) shows that PDF. One quarto render
+# PDF through the paper-typst format in _extensions/paper/, and the deck
+# (deck.qmd) through deck-typst in _extensions/deck/; each PDF's page
+# (midterm/index.qmd, final/index.qmd, deck/index.qmd) shows it. One quarto render
 # builds it all. The course image and RStudio both include Quarto.
 
 quarto_path <- function() {
@@ -90,17 +91,23 @@ check_exhibits <- function(docs) {
   invisible(TRUE)
 }
 
-# Each paper's page names its PDF (pdf: in the page's front matter). A paper
-# whose front matter lost format: paper-typst renders to a web page instead,
-# and the page would show nothing.
+# Each PDF's page names its PDF (pdf: in the page's front matter): the
+# papers' pages and the deck's (deck/index.qmd shows ../deck.pdf). A source
+# whose front matter lost its format line (paper-typst for a paper,
+# deck-typst for the deck) renders to a web page instead, and its page would
+# show nothing.
 check_papers <- function(pages) {
+  tidy <- function(p) sub("^\\./", "", gsub("[^/]+/\\.\\./", "", p))
   for (page in pages) {
     pdf <- grep("^pdf:", readLines(page, warn = FALSE), value = TRUE)
     if (!length(pdf)) next
-    pdf <- gsub("^pdf:\\s*[\"']?|[\"']?\\s*$", "", pdf[1])
-    if (!file.exists(file.path("docs", dirname(page), pdf)))
-      stop("The build made no ", file.path(dirname(page), pdf), ". Keep the line `format: paper-typst` in the front matter of ",
-           file.path(dirname(page), sub("\\.pdf$", ".qmd", pdf)), ", then build again.", call. = FALSE)
+    pdf <- tidy(file.path(dirname(page), gsub("^pdf:\\s*[\"']?|[\"']?\\s*$", "", pdf[1])))
+    if (!file.exists(file.path("docs", pdf))) {
+      src <- sub("\\.pdf$", ".qmd", pdf)
+      fmt <- if (basename(src) == "deck.qmd") "deck-typst" else "paper-typst"
+      stop("The build made no ", pdf, ". Keep the line `format: ", fmt, "` in the front matter of ",
+           src, ", then build again.", call. = FALSE)
+    }
   }
   invisible(TRUE)
 }
