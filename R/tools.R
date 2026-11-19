@@ -1,6 +1,7 @@
 # Finding and running the command-line tools the course uses.
-# RStudio does not read the shell's startup files, so a tool installed into a
-# user folder is often missing from PATH here; look in the install folders too.
+# R started outside a login shell does not read the shell's startup files, so
+# a tool installed into a user folder is often missing from PATH here; look in
+# the install folders too.
 
 # The user's home folder. On Windows, R's "~" is the Documents folder, which
 # OneDrive often syncs; command-line programs such as Codex use USERPROFILE.
@@ -25,8 +26,9 @@ synced_folder <- function(d) {
     grepl("onedrive|icloud|dropbox|google ?drive", d, ignore.case = TRUE)
 }
 
-# A GitHub codespace (the browser path): RStudio Server in a container that
-# holds one course repository, signed in to GitHub as the student.
+# A GitHub codespace: VS Code (on the desktop or in the browser) connected to
+# a container that holds the student's course repositories, signed in to
+# GitHub as the student.
 in_codespace <- function() identical(Sys.getenv("CODESPACES"), "true")
 
 tool_dirs <- function() {
@@ -60,12 +62,12 @@ run_tool <- function(name, args = character(), timeout = 60) {
   list(status = if (is.null(status)) 0L else status, out = paste(out, collapse = "\n"))
 }
 
-# Run a command in a visible RStudio Terminal, for steps the student must
-# watch or answer (browser sign-ins).
+# Run a command where the student sees and answers it, for steps such as
+# browser sign-ins: in the terminal the R console runs in, until it ends.
 in_terminal <- function(name, args = character()) {
   path <- find_tool(name)
-  cmd <- paste(c(shQuote(path), args), collapse = " ")
-  rstudioapi::terminalExecute(cmd, workingDir = getwd(), show = TRUE)
+  system(paste(c(shQuote(path), args), collapse = " "))
+  invisible()
 }
 
 http_status <- function(url, headers = character()) {

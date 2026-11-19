@@ -1,13 +1,13 @@
 Package: ppol6818
 Title: Course Setup and AI Agent Launcher for PPOL 6818
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: person("Benjamin", "Daniels", role = c("aut", "cre"), email = "bd581@georgetown.edu")
-Description: Checks a student's sign-ins for GitHub, Codex, KoboToolbox and
-    IPUMS, sends the student to the right sign-up or key page when one is
-    missing, connects Codex, the course AI agent, to the student's RStudio
-    session, opens it inside RStudio, and reads and deploys KoboToolbox
-    forms from R, and gets IPUMS USA extracts as Parquet files read
-    through DuckDB.
+Description: Checks a student's sign-ins for GitHub, the course AI agents,
+    KoboToolbox and IPUMS, connects Claude Code and Codex to the student's
+    R console in a course codespace, keeps the student's course
+    repositories up to date, builds the pair minisite, reads and deploys
+    KoboToolbox forms from R, and gets IPUMS USA extracts as Parquet files
+    read through DuckDB.
 License: MIT
 Encoding: UTF-8
-Imports: jsonlite, rstudioapi, curl, ipumsr, mcptools, nanonext, ellmer, writexl, DBI, duckdb
+Imports: jsonlite, curl, ipumsr, mcptools, nanonext, ellmer, writexl, DBI, duckdb

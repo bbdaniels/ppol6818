@@ -1,4 +1,4 @@
-# The course agent, in RStudio's Terminal. Each student uses the agent their
+# The course agent. Each student uses the agent their
 # own subscription runs: Codex with ChatGPT Plus, or Claude Code with Claude
 # Pro. The installer installs both programs; setup asks which subscription the
 # student has and signs that agent in.
@@ -29,44 +29,37 @@ course_agent <- function() {
   NA_character_
 }
 
-#' Open the course AI agent (Codex or Claude Code, whichever the student
-#' signed in to) in RStudio's Terminal, in the current project.
+#' Open the course AI agent. In a codespace each agent has its own panel in
+#' VS Code (Claude Code and Codex, on the right), so this says where; on the
+#' student's own computer it runs the agent here, in this terminal, until the
+#' student quits it.
 #' @export
 agent <- function() {
+  if (in_codespace()) {
+    message("The course agents are in the panel on the right of VS Code: Claude Code, and Codex in its own tab.")
+    return(invisible())
+  }
   id <- course_agent()
   if (is.na(id)) {
     setup_agent()
     id <- course_agent()
     if (is.na(id)) return(invisible())
   }
-  rstudioapi::terminalExecute(paste(c(shQuote(find_tool(id)), connector_args(id)), collapse = " "),
-                              workingDir = getwd(), show = TRUE)
+  system(paste(c(shQuote(find_tool(id)), connector_args(id)), collapse = " "))
   invisible()
 }
 
-# The working layout when a course project opens: the newest run.R in the
-# editor and the agent beside it. In RStudio (the student's own computer) the
-# agent runs in the Terminal below; only on a fresh RStudio session, since
-# after an R restart the earlier Terminal is still running the agent. In VS
-# Code (a codespace) R runs in the terminal below the editor and the agent has
-# its own panel, so only run.R is opened, through VS Code's command line.
+# The working layout when the R console starts in a course repository: the
+# newest run.R opens in the editor, through VS Code's command line. The R
+# console is below it and the agents have their own panel, so nothing else
+# opens.
 open_workspace <- function(newSession = TRUE) {
   if (!isTRUE(newSession)) return(invisible())
-  rstudio <- rstudioapi::isAvailable()
-  vscode <- nzchar(Sys.getenv("VSCODE_IPC_HOOK_CLI")) && nzchar(Sys.which("code"))
-  if (!rstudio && !vscode) return(invisible())
-  # The course folder has its own run.R since this version; add it to older ones.
-  if (!file.exists("run.R") && normalizePath(getwd(), mustWork = FALSE) == normalizePath(course_dir(), mustWork = FALSE))
-    file.copy(system.file("project", "run.R", package = "ppol6818"), "run.R")
+  if (!nzchar(Sys.getenv("VSCODE_IPC_HOOK_CLI")) || !nzchar(Sys.which("code"))) return(invisible())
   # A lab repository has a folder a week (week-01, week-02, ...): open the
   # newest week's run.R.
   week <- utils::tail(sort(Sys.glob("week-[0-9][0-9]/run.R")), 1)
   file <- if (file.exists("run.R")) "run.R" else if (length(week)) week else character()
-  if (vscode) {
-    if (length(file)) system2("code", c("--reuse-window", shQuote(normalizePath(file))), wait = FALSE)
-    return(invisible())
-  }
-  if (length(file)) rstudioapi::navigateToFile(file)
-  if (is.na(course_agent())) return(invisible())
-  agent()
+  if (length(file)) system2("code", c("--reuse-window", shQuote(normalizePath(file))), wait = FALSE)
+  invisible()
 }

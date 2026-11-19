@@ -107,7 +107,6 @@ check <- function() {
   for (n in names(res)) cat(sprintf("  %-34s %s  %s\n", n, mark(res[[n]]$ok), res[[n]]$detail))
   ok <- !any(vapply(res, function(r) isFALSE(r$ok), TRUE))
   cat(if (ok) "\nEverything passes. Submit this output on Canvas.\n"
-      else if (in_codespace()) "\nSomething failed. Run ppol6818::setup() in the R console to fix it.\n"
-      else "\nSomething failed. Click Addins > Course setup to fix it.\n")
+      else "\nSomething failed. Click Course setup in the PPOL 6818 panel (or run ppol6818::setup() in the R console) to fix it.\n")
   invisible(res)
 }

@@ -137,8 +137,9 @@ project_inputs <- function() {
 #' Build the minisite into docs/: the landing page, the deck, and the
 #' registered report and final paper as PDFs, each shown on its own page.
 #'
-#' Run it from your pair's repository: `ppol6818::build_site()` in the R
-#' terminal, or Addins > Build minisite in RStudio. It first pulls your
+#' Click Build minisite in the PPOL 6818 panel, or run
+#' `ppol6818::build_site()` in the R console: in a codespace it builds your
+#' pair's repository wherever the console is. It first pulls your
 #' partner's pushed work (your own commits and uncommitted changes are
 #' kept), then checks that every exhibit the pages and papers show is in
 #' place, then renders. Nothing runs during the build: run.R makes the
@@ -147,10 +148,12 @@ project_inputs <- function() {
 #' @param pull Bring in your partner's pushed work first.
 #' @export
 build_site <- function(path = ".", pull = TRUE) {
+  if (!file.exists(file.path(path, "_quarto.yml")) && in_codespace() && nzchar(pair_repo()))
+    path <- file.path(course_dir(), pair_repo())
   if (!file.exists(file.path(path, "_quarto.yml")))
     stop("No _quarto.yml here: open your pair's project repository first.", call. = FALSE)
   q <- quarto_path()
-  if (!nzchar(q)) stop("Quarto was not found. The course codespace includes it; on your own computer, install it from https://quarto.org or update RStudio.", call. = FALSE)
+  if (!nzchar(q)) stop("Quarto was not found. The course codespace includes it; on your own computer, install it from https://quarto.org.", call. = FALSE)
   owd <- setwd(path); on.exit(setwd(owd))
   if (pull) pull_partner(".")
   inputs <- project_inputs()
@@ -171,7 +174,5 @@ build_site <- function(path = ".", pull = TRUE) {
   site <- sub("^https://github.com/([^/]+)/(.+)$", "https://\\1.github.io/\\2/", repo_url())
   message("Built docs/. After you commit and push it, the minisite is at ", site,
           " (GitHub takes about a minute to publish).")
-  if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable() && file.exists("docs/index.html"))
-    utils::browseURL("docs/index.html")
   invisible(site)
 }

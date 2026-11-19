@@ -3,18 +3,21 @@
 # key or command-line sign-in failing; the student is then asked whether they
 # have an account, and sent to the sign-up page if not.
 
+# Setup talks to the student in the R console: questions, notes and keys are
+# asked and answered there.
+
+# A yes or no question; with two named choices (yes, no), the student picks
+# one of them by number. TRUE means the first.
 ask <- function(title, message, yes = "Yes", no = "No") {
-  if (rstudioapi::isAvailable()) rstudioapi::showQuestion(title, message, yes, no)
-  else utils::askYesNo(message)
+  if (identical(c(yes, no), c("Yes", "No"))) return(isTRUE(utils::askYesNo(message)))
+  i <- utils::menu(c(yes, no), title = message)
+  i == 1
 }
 
-tell <- function(title, message) {
-  if (rstudioapi::isAvailable()) rstudioapi::showDialog(title, message) else message(message)
-}
+tell <- function(title, message) message("\n", title, ": ", message, "\n")
 
 secret <- function(prompt) {
-  v <- if (rstudioapi::isAvailable()) rstudioapi::askForSecret("ppol6818", prompt, prompt)
-       else readline(paste0(prompt, ": "))
+  v <- readline(paste0(prompt, ": "))
   if (is.null(v)) "" else trimws(v)
 }
 
@@ -47,8 +50,8 @@ setup_github <- function() {
                          "as a second address (Settings > Emails), then apply with it",
                          "(approval can take a few days; you can keep going). Click OK when submitted."))
   })
+  tell("GitHub", "A one-time code appears below. Press Enter, paste the code in the browser, and approve.")
   in_terminal("gh", c("auth", "login", "--web", "--hostname", "github.com", "--git-protocol", "https"))
-  tell("GitHub", "The Terminal shows a one-time code. Press Enter there, paste the code in the browser, and approve.")
   wait_for(check_github, "GitHub sign-in")
   run_tool("gh", c("auth", "setup-git"))
 }
@@ -68,17 +71,17 @@ setup_agent <- function() {
   # In a codespace the browser cannot reach a sign-in page served inside the
   # container, so Codex signs in with a code instead.
   device <- in_codespace() && id == "codex"
-  in_terminal(id, c(a$login, if (device) "--device-auth"))
-  tell(a$name, paste0("The Terminal is signing you in to ", a$name, ". ",
+  tell(a$name, paste0("Signing you in to ", a$name, " below. ",
                       if (in_codespace()) "Open the link it shows, sign in" else "Sign in in the browser",
                       " with the ", a$account, " account that has your ", a$plan, " subscription",
                       if (in_codespace()) ", and follow the steps it shows" else "",
                       ", then come back here."))
+  in_terminal(id, c(a$login, if (device) "--device-auth"))
   wait_for(function() list(ok = signed_in(id)), paste(a$name, "sign-in"))
 }
 
 kobo_token_from_password <- function() {
-  user <- if (rstudioapi::isAvailable()) rstudioapi::showPrompt("KoboToolbox", "KoboToolbox username") else readline("KoboToolbox username: ")
+  user <- readline("KoboToolbox username: ")
   if (!nzchar(user %||% "")) return("")
   pw <- secret("KoboToolbox password (used once to fetch your key, never saved)")
   h <- curl::new_handle(timeout = 20, httpauth = 1L, userpwd = paste0(user, ":", pw))
@@ -138,7 +141,7 @@ setup <- function() {
   tools <- check_tools()
   if (!tools$ok) {
     tell("Programs missing", paste(tools$detail,
-         "\nRun the course installer again (see Canvas), then click Addins > Course setup."))
+         "\nRun the course installer again (see Canvas), then run ppol6818::setup() in the R console."))
     return(invisible(check()))
   }
   migrate_keys()

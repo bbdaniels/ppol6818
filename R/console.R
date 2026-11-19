@@ -1,19 +1,17 @@
-# The agent runs R in the student's RStudio session, through the Console, as
-# if the student pressed Run: the code is echoed in the Console, objects land
-# in the Environment pane and plots in the Plots pane. The agent's own R
-# process never runs course code.
+# The agent runs R in the student's own R session, the R console in VS Code's
+# terminal, as if the student had typed it: the code and its output are
+# echoed in the console and the objects it makes stay in the session. The
+# agent's own R process never runs course code.
 #
 # mcptools carries each tool call into the session, where it runs while R is
-# idle at the prompt. Code sent to the Console runs only after the call
-# returns, so running is two calls. run_in_console stores the code and sends
-# one line to the Console, ppol6818:::console_run(), which runs the code with
-# its echo; console_run's exit handler marks the run finished however it
-# ends (done, error, or the student pressing Stop). Nothing else is queued
-# behind the code: RStudio may discard queued Console input after an error.
+# idle at the prompt. run_in_console runs the code there, with its echo, in
+# place of the waiting prompt, and returns what it printed; console_run's
+# exit handler marks the run finished however it ends (done, error, or the
+# student pressing Ctrl+C).
 
 console <- new.env(parent = emptyenv())
 
-#' Make this RStudio session reachable by the course agent.
+#' Make this R session reachable by the course agent.
 #'
 #' Called from the course .Rprofile in interactive sessions.
 #' @export
@@ -100,14 +98,9 @@ run_in_console <- function(code) {
   console$file <- tempfile(fileext = ".txt")
   console$notes <- character()
   console$active <- TRUE
-  console$sent <- Sys.time()
-  if (rstudioapi::isAvailable()) {
-    rstudioapi::sendToConsole(console_call, execute = TRUE, echo = FALSE, focus = FALSE)
-    return("Sent to the RStudio Console. Call console_output to get what it printed.")
-  }
-  # R in a terminal (VS Code): this call already runs in the student's
-  # session while it waits at the prompt, so the code runs here, echoed in
-  # the terminal in place of the waiting prompt, which is drawn again after it.
+  # This call already runs in the student's session while it waits at the
+  # prompt, so the code runs here, echoed in the terminal in place of the
+  # waiting prompt, which is drawn again after it.
   cat("\r")
   tryCatch(console_run(), error = function(e) cat("Error:", conditionMessage(e), "\n"))
   cat(getOption("prompt"))
@@ -120,7 +113,7 @@ no_console <- paste(
   "Call list_r_sessions: if it lists several, ask the student which R console they are using (or pick one if they do not mind), call select_r_session with it, then send the code again;",
   "if it lists none, ask the student to open the R console (the R terminal in VS Code) and try again.")
 
-# Runs the code the agent sent, at the Console; run_in_console sends this call.
+# Runs the code the agent sent, in the console.
 console_run <- function() {
   if (!isTRUE(console$active) || is.null(console$code)) return(invisible())
   code <- console$code
@@ -154,8 +147,8 @@ console_run <- function() {
   invisible()
 }
 
-# In the History pane, the agent's code takes the place of the one line that
-# ran it, so History reads as if the student had pressed Run on that code.
+# The agent's code goes into the console's history (the up arrow), as if the
+# student had typed it.
 console_call <- "ppol6818:::console_run()"
 history_replace <- function(text) {
   h <- tempfile()
@@ -171,24 +164,9 @@ history_replace <- function(text) {
 
 console_output <- function() {
   if (!interactive()) return(no_console)
-  # In a VS Code terminal, run_in_console already returned the output; asked
-  # again, give the same output rather than "nothing sent".
-  if (is.null(console$file)) return(console$last %||% "Nothing has been sent to the Console.")
-  if (isTRUE(console$active)) {
-    # This call runs only while R is idle at the prompt. So if console_run has
-    # started (it took the code), it has ended; if it has not started after a
-    # while, RStudio dropped it. Either way the run is over, never stuck.
-    if (!is.null(console$code) && difftime(Sys.time(), console$sent, units = "secs") < 10)
-      return("Still running in the Console. Call console_output again in a few seconds.")
-    dropped <- !is.null(console$code)
-    console$code <- NULL
-    console$active <- FALSE
-    if (dropped) {
-      unlink(console$file)
-      console$file <- NULL
-      return("RStudio did not run the code (the Console was busy). Send it again with run_in_console.")
-    }
-  }
+  # run_in_console already returned the output; asked again, give the same
+  # output rather than "nothing sent".
+  if (is.null(console$file)) return(console$last %||% "Nothing has been sent to the R console.")
   out <- readLines(console$file, warn = FALSE)
   unlink(console$file)
   console$file <- NULL
@@ -211,22 +189,21 @@ console_tools <- function() {
     ellmer::tool(run, name = "run_in_console",
       description = paste(
         "Run R code in the student's own R session, as if the student ran it:",
-        "the code and its output are echoed in the student's R console (VS Code's R terminal, or RStudio's Console),",
+        "the code and its output are echoed in the student's R console (the R terminal in VS Code),",
         "and the objects it makes stay in that session.",
-        "This is the only way to run R for this course. It returns what the code printed, or, in RStudio, says it was sent, and then console_output reads the result.",
+        "This is the only way to run R for this course. It returns what the code printed, with any messages, warnings and errors.",
         "KoboToolbox is reached from R through the course package's kobo_* functions (forms, deploy, replace, submissions, export);",
         "run kobo_help() first to see them and their workflows."),
       arguments = list(code = ellmer::type_string("The R code to run."))),
     ellmer::tool(output, name = "console_output",
       description = paste(
-        "Return what the code last sent with run_in_console printed in the Console, with any messages, warnings and errors.",
-        "If it says the code is still running, call it again."),
+        "Return again what the code last sent with run_in_console printed in the R console, with any messages, warnings and errors."),
       arguments = list())
   )
 }
 
-#' The MCP server the course agent starts: the Console tools, plus
-#' mcptools' tools for choosing the RStudio session.
+#' The MCP server the course agent starts: the R console tools, plus
+#' mcptools' tools for choosing the R session.
 #' @export
 console_server <- function() {
   find_consoles_by_socket()
@@ -272,8 +249,8 @@ find_consoles_by_socket <- function() {
 rscript_path <- function()
   file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
 
-# The agent gets the connector only when the course opens it from RStudio:
-# agent() passes it on the command line (Codex: -c overrides; Claude Code:
+# On the student's own computer the agent gets the connector only when the
+# course opens it (agent()), which passes it on the command line (Codex: -c overrides; Claude Code:
 # this file with --mcp-config). Registering it in the agent's own settings
 # would make every session of that agent on the computer start an R process,
 # course or not.
@@ -291,7 +268,7 @@ connector_args <- function(id) {
   c("--mcp-config", shQuote(claude_mcp_file()), "--allowedTools", "mcp__rstudio")
 }
 
-# Set up the RStudio connector for each agent installed, so either works.
+# Set up the R console connector for each agent installed, so either works.
 setup_console_agent <- function() {
   # Earlier versions of this package registered it in each agent's own
   # settings; take that out.

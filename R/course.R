@@ -116,18 +116,6 @@ pair_repo <- function(lab_dir = codespace_repo()$dir) {
   trimws(readLines(f, n = 1, warn = FALSE))
 }
 
-# RStudio's Projects menu (top right) lists these, so the student switches
-# between the lab and the pair project in one click.
-remember_projects <- function(dirs) {
-  rproj <- unlist(lapply(dirs, function(d) Sys.glob(file.path(d, "*.Rproj"))))
-  if (!length(rproj)) return(invisible())
-  f <- path.expand("~/.local/share/rstudio/monitored/lists/project_mru")
-  dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
-  old <- if (file.exists(f)) readLines(f, warn = FALSE) else character()
-  writeLines(unique(c(rproj, old)), f)
-  invisible()
-}
-
 sync_codespace <- function() {
   lab <- codespace_repo()
   out <- list(pulled = character(), cloned = character(), problems = character())
@@ -152,10 +140,8 @@ sync_codespace <- function() {
       if (r$ok) out$pulled <- c(out$pulled, proj)
       else out$problems <- c(out$problems, pull_problem(r, proj, dest, "your partner's latest work"))
     }
-    remember_projects(c(lab$dir, dest))
   }
-  where <- if (rstudioapi::isAvailable()) " (Projects menu, top right)" else " (in the file list on the left)"
-  for (d in out$cloned) message("Your pair's repository is ready: ", file.path(course_dir(), d), where)
+  for (d in out$cloned) message("Your pair's repository is ready: ", file.path(course_dir(), d), " (in the file list on the left)")
   if (length(out$problems)) tell("PPOL 6818", paste(out$problems, collapse = "\n\n"))
   invisible(out)
 }
@@ -170,10 +156,6 @@ sync_course <- function() {
   cl <- clone_course_repos()
   for (a in acc) message("Accepted the invitation to ", a)
   for (d in cl) message("Your course repository is ready: ", d)
-  if (length(cl) && rstudioapi::isAvailable()) {
-    open <- ask("Course repository", paste0("Open ", basename(cl[1]), " now?"))
-    if (isTRUE(open)) rstudioapi::openProject(cl[1], newSession = FALSE)
-  }
   invisible(list(accepted = acc, cloned = cl))
 }
 
@@ -193,14 +175,14 @@ check_course <- function() {
   }
   m <- gh_json(paste0("user/memberships/orgs/", course_org))
   if (is.null(m)) return(list(ok = NA, detail = "not invited yet (expected until you submit this output)"))
-  if (!identical(m$state, "active")) return(list(ok = FALSE, detail = "invitation not accepted; click Addins > Course setup"))
+  if (!identical(m$state, "active")) return(list(ok = FALSE, detail = "invitation not accepted; run ppol6818::setup()"))
   repos <- my_course_repos()
   list(ok = TRUE, detail = if (length(repos)) paste(basename(repos), collapse = ", ") else "member, no repositories yet")
 }
 
-# Run when the course project opens: full setup until it has passed once,
-# then only the quick invitation and repository sync; then run.R opens in
-# the editor and the course agent in the Terminal below it.
+# Run when the R console starts in a course repository (its .Rprofile): full
+# setup until it has passed once, then only the quick sync of the course
+# repositories; then the newest run.R opens in the editor.
 on_open <- function(newSession = TRUE) {
   done <- state_file("setup-passed")
   if (!file.exists(done)) {

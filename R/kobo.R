@@ -1,5 +1,5 @@
 # KoboToolbox from R: the course's Kobo tools. The agent calls these through
-# the RStudio Console like any other R code, and students can call them too.
+# the R console like any other R code, and students can call them too.
 # They replace the kobo-mcp connector (github.com/bbdaniels/kobo-mcp), whose
 # ten tools they port one for one, so the course needs no Python and no
 # connector registered with the agent. The key is KOBO_API_TOKEN, which the
@@ -47,7 +47,7 @@ xlsx_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 kobo_token <- function() {
   tok <- Sys.getenv("KOBO_API_TOKEN")
-  if (!nzchar(tok)) stop("No KoboToolbox key in this R session. Open the course project, or click Addins > Course setup.", call. = FALSE)
+  if (!nzchar(tok)) stop("No KoboToolbox key in this R session. Click Course setup in the PPOL 6818 panel, or run ppol6818::setup().", call. = FALSE)
   tok
 }
 
