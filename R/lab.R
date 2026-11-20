@@ -6,7 +6,9 @@
 # which writes week-NN/answers.csv and prints one line per answer: PASS or
 # CHECK for a public answer (its target is in the starter), "recorded" for a
 # private one (the course checks it), MISSING for an id not given. It then
-# checks that notes.md has the student's own text under every heading.
+# checks that notes.md has the student's own text under every heading, and
+# that every exhibit week-NN/exhibits.csv names (columns file, description:
+# the lab's table and figure) has been written.
 
 lab_week_dir <- function(week, dir = NULL) {
   wk <- sprintf("week-%02d", as.integer(week))
@@ -58,9 +60,11 @@ lab_answers <- function(week, ..., dir = NULL) {
   }
   notes <- lab_notes(d)
   for (h in names(notes)) cat(sprintf("  %-18s %-8s  %s\n", "notes.md", if (notes[[h]]) "written" else "MISSING", h))
+  ex <- lab_exhibits(d)
+  for (f in names(ex)) cat(sprintf("  %-18s %-8s  %s\n", f, if (ex[[f]]) "written" else "MISSING", attr(ex, "description")[[f]]))
 
-  n_miss <- sum(status == "MISSING") + sum(!unlist(notes))
-  msg <- if (n_miss == 0 && !any(status == "CHECK")) "Every answer is recorded and every note written. Commit and push"
+  n_miss <- sum(status == "MISSING") + sum(!unlist(notes)) + sum(!unlist(ex))
+  msg <- if (n_miss == 0 && !any(status == "CHECK")) "Every answer is recorded, every note written and every exhibit saved. Commit and push"
          else if (n_miss == 0) "Everything is recorded. A CHECK line is worth a second look with your agent before you commit and push"
          else "Not complete yet: fill in every MISSING line, run run.R again, then commit and push"
   cat(sprintf("\n%s week-%02d.\n", msg, as.integer(week)))
@@ -83,4 +87,16 @@ lab_notes <- function(d) {
     length(body) > 0
   })
   stats::setNames(res, sub("^## ", "", x[h]))
+}
+
+# For each exhibit week-NN/exhibits.csv names (the lab's table and figure),
+# whether the file exists. Names are relative to the week's folder; the
+# descriptions ride along as an attribute for printing.
+lab_exhibits <- function(d) {
+  f <- file.path(d, "exhibits.csv")
+  if (!file.exists(f)) return(list())
+  ex <- utils::read.csv(f, stringsAsFactors = FALSE)
+  res <- stats::setNames(lapply(ex$file, function(x) file.exists(file.path(d, x))), ex$file)
+  attr(res, "description") <- stats::setNames(as.list(ex$description), ex$file)
+  res
 }
