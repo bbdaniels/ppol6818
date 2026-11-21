@@ -1,4 +1,4 @@
 {
-  "version": "2.3.0",
-  "note": "The course codespace has new software: ggdag and dagitty, for drawing causal diagrams in week 3."
+  "version": "2.4.0",
+  "note": "The course codespace has new software: readxl, for reading KoboToolbox forms in weeks 7 and 8."
 }
