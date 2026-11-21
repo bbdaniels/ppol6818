@@ -228,8 +228,9 @@ kobo_download_form <- function(uid, path) {
 # Load an XLSForm into an existing form. /api/v2/imports/ is the only endpoint
 # that parses the file: posting the file to /api/v2/assets/ makes an empty
 # form and ignores the upload, and an import with no destination makes a
-# library block, which cannot be deployed.
-kobo_import <- function(uid, path) {
+# library block, which cannot be deployed. The import renames the form to the
+# XLSForm's form_title, so the name given (with its maker) is set again.
+kobo_import <- function(uid, path, name) {
   if (!file.exists(path)) stop("No file at ", path, call. = FALSE)
   imp <- kobo_request("/api/v2/imports/", "POST",
                       form = list(destination = paste0(kobo_server(), "/api/v2/assets/", uid, "/"),
@@ -243,6 +244,10 @@ kobo_import <- function(uid, path) {
     Sys.sleep(1)
   }
   a <- kobo_request(paste0("/api/v2/assets/", uid, "/"), query = list(format = "json"))
+  if (!identical(a$name, name)) {
+    kobo_request(paste0("/api/v2/assets/", uid, "/"), "PATCH", body = list(name = name))
+    a <- kobo_request(paste0("/api/v2/assets/", uid, "/"), query = list(format = "json"))
+  }
   if (!length(a$content$survey)) stop("The form ", uid, " has no questions after the upload; not deploying it.", call. = FALSE)
   a
 }
@@ -261,7 +266,7 @@ kobo_deploy <- function(path, name = tools::file_path_sans_ext(basename(path))) 
   if (is.null(form_maker(name))) name <- paste(name, kobo_maker()$tag)
   uid <- kobo_request("/api/v2/assets/", "POST", body = list(name = name, asset_type = "survey"))$uid
   # A failed upload would otherwise leave an empty draft form on the account.
-  tryCatch(kobo_import(uid, path), error = function(e) {
+  tryCatch(kobo_import(uid, path, name), error = function(e) {
     try(kobo_request(paste0("/api/v2/assets/", uid, "/"), "DELETE"), silent = TRUE)
     stop(e)
   })
@@ -278,7 +283,8 @@ kobo_deploy <- function(path, name = tools::file_path_sans_ext(basename(path))) 
 #' @export
 kobo_replace <- function(uid, path, others = FALSE) {
   check_mine(uid, "replace", others)
-  a <- kobo_import(uid, path)
+  name <- kobo_request(paste0("/api/v2/assets/", uid, "/"), query = list(format = "json"))$name
+  a <- kobo_import(uid, path, name)
   kobo_request(paste0("/api/v2/assets/", uid, "/deployment/"), "PATCH",
                body = list(active = TRUE, version_id = a$version_id))
   a <- kobo_request(paste0("/api/v2/assets/", uid, "/"), query = list(format = "json"))
