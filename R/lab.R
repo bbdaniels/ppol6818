@@ -1,35 +1,42 @@
 # A week's lab answers: record them from run.R and check the public ones.
 #
-# Each lab with answers ships week-NN/answers-spec.csv (columns id,
-# description, kind, target, tolerance) and week-NN/notes.md. run.R ends with
+# Each lab ships week-NN/notes.md, and a lab with answers also ships
+# week-NN/answers-spec.csv (columns id, description, kind, target,
+# tolerance). run.R ends with
 #   ppol6818::lab_answers(2, unins_ky_2013 = ky13, did_coef = coef(m)[["treat"]], ...)
 # which writes week-NN/answers.csv and prints one line per answer: PASS or
 # CHECK for a public answer (its target is in the starter), "recorded" for a
-# private one (the course checks it), MISSING for an id not given. It then
-# checks that notes.md has the student's own text under every heading, and
-# that every exhibit week-NN/exhibits.csv names (columns file, description:
-# the lab's table and figure) has been written.
+# private one (the course checks it), MISSING for an id not given. A lab
+# without answers ends with ppol6818::lab_answers(7), which writes nothing.
+# Either way it then checks that notes.md has the student's own text under
+# every heading, and that every exhibit week-NN/exhibits.csv names (columns
+# file, description: the lab's table and figure) has been written.
 
 lab_week_dir <- function(week, dir = NULL) {
   wk <- sprintf("week-%02d", as.integer(week))
   cands <- c(dir, file.path(getwd(), wk), file.path(codespace_repo()$dir, wk))
-  for (d in cands) if (!is.null(d) && file.exists(file.path(d, "answers-spec.csv"))) return(normalizePath(d))
-  stop("Cannot find ", wk, "/answers-spec.csv. Run run.R from your lab repository, where the R console starts.", call. = FALSE)
+  for (d in cands) if (!is.null(d) && any(file.exists(file.path(d, c("answers-spec.csv", "notes.md"))))) return(normalizePath(d))
+  stop("Cannot find ", wk, "/notes.md. Run run.R from your lab repository, where the R console starts.", call. = FALSE)
 }
 
 #' Record a lab's answers in week-NN/answers.csv and check the public ones.
 #'
 #' @param week The lab's week number.
-#' @param ... One named value per answer id in week-NN/answers-spec.csv.
+#' @param ... One named value per answer id in week-NN/answers-spec.csv;
+#'   none for a lab without answers.
 #' @param dir The week's folder, if not week-NN in the working directory.
 #' @return The answers, invisibly, as a data frame.
 #' @export
 lab_answers <- function(week, ..., dir = NULL) {
   d <- lab_week_dir(week, dir)
-  spec <- utils::read.csv(file.path(d, "answers-spec.csv"), stringsAsFactors = FALSE)
   given <- list(...)
+  spec_file <- file.path(d, "answers-spec.csv")
+  if (!file.exists(spec_file)) {
+    if (length(given)) stop("Week ", week, " has no answers to record: run ppol6818::lab_answers(", week, ") with nothing else.", call. = FALSE)
+    spec <- data.frame(id = character(), description = character(), kind = character(), target = numeric(), tolerance = numeric())
+  } else spec <- utils::read.csv(spec_file, stringsAsFactors = FALSE)
   bad <- setdiff(names(given), spec$id)
-  if (length(bad) || any(!nzchar(names(given) %||% ""))) {
+  if (length(bad) || (length(given) && any(!nzchar(names(given) %||% "")))) {
     stop("Not an answer for week ", week, ": ", paste(bad, collapse = ", "),
          ". The answers are: ", paste(spec$id, collapse = ", "), call. = FALSE)
   }
@@ -39,10 +46,11 @@ lab_answers <- function(week, ..., dir = NULL) {
     if (length(v) != 1 || !is.numeric(v)) stop(id, " must be one number, not ", class(v)[1], " of length ", length(v), call. = FALSE)
     as.numeric(v)
   }, 0)
-  out <- data.frame(id = spec$id, value = value, stringsAsFactors = FALSE)
-  utils::write.csv(out, file.path(d, "answers.csv"), row.names = FALSE)
-
-  cat(sprintf("\nWeek %d lab answers, written to %s\n", as.integer(week), file.path(basename(d), "answers.csv")))
+  out <- data.frame(id = spec$id, value = unname(value), stringsAsFactors = FALSE)
+  if (nrow(spec)) {
+    utils::write.csv(out, file.path(d, "answers.csv"), row.names = FALSE)
+    cat(sprintf("\nWeek %d lab answers, written to %s\n", as.integer(week), file.path(basename(d), "answers.csv")))
+  } else cat(sprintf("\nWeek %d lab: notes and exhibits\n", as.integer(week)))
   status <- character(nrow(spec))
   for (i in seq_len(nrow(spec))) {
     v <- value[i]
@@ -63,7 +71,7 @@ lab_answers <- function(week, ..., dir = NULL) {
   ex <- lab_exhibits(d)
   for (f in names(ex)) cat(sprintf("  %-18s %-8s  %s\n", f, if (ex[[f]]) "written" else "MISSING", attr(ex, "description")[[f]]))
 
-  n_miss <- sum(status == "MISSING") + sum(!unlist(notes)) + sum(!unlist(ex))
+  n_miss <- sum(status == "MISSING") + sum(!as.logical(unlist(notes))) + sum(!as.logical(unlist(ex)))
   msg <- if (n_miss == 0 && !any(status == "CHECK")) "Every answer is recorded, every note written and every exhibit saved. Commit and push"
          else if (n_miss == 0) "Everything is recorded. A CHECK line is worth a second look with your agent before you commit and push"
          else "Not complete yet: fill in every MISSING line, run run.R again, then commit and push"
