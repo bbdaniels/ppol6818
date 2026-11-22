@@ -73,7 +73,7 @@ When you quit VS Code, the codespace stops by itself about half an hour later an
 
 ## Working with the agent
 
-Click in the message box at the bottom of the agent panel, type your request, and press Enter. When the agent asks to change a file or run code, read what it will do, then allow it. Ask the agent in plain English to write, run, and check code. It runs its code in your R console, as if you had run it yourself: you see the code and what it prints in the console, and the objects it makes stay in your R session, where you can use them. Figures are saved to files, which you open by clicking them in the file list. The agent reads the course rules from the file `AGENTS.md` in each repository (Claude Code reaches it through `CLAUDE.md`): it writes code and shows you evidence that it worked, and it does not write the prose you submit.
+Click in the message box at the bottom of the agent panel, type your request, and press Enter. When the agent asks to change a file or run code, read what it will do, then allow it. Ask the agent in plain English to write, run, and check code. It runs its code in your R console, as if you had run it yourself: you see the code and what it prints in the console, and the objects it makes stay in your R session, where you can use them. Figures are saved to files, which you open by clicking them in the file list. The agent reads its instructions from the file `AGENTS.md` in each repository (Claude Code reaches it through `CLAUDE.md`): it writes code and shows you evidence that it worked, and it does not write the prose you submit.
 
 ## Data
 
