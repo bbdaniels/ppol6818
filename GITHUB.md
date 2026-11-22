@@ -53,7 +53,7 @@ To publish it:
 
 ## Submitting
 
-At each deadline a script records your repository's latest pushed commit as your submission; commits after the deadline count toward the next week. Push before the deadline, then submit the link each week's Canvas assignment asks for: the assignment gives the steps for that week, and "How to submit" in the course rules gives them for every week.
+At each deadline a script records your repository's latest pushed commit as your submission; commits after the deadline count toward the next week. Push before the deadline, then submit the link each week's Canvas assignment asks for: the assignment gives the steps.
 
 ## When something goes wrong
 
