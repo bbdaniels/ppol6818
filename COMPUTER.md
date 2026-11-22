@@ -1,5 +1,7 @@
 # RStudio on your own computer
 
+The course itself uses only the codespace; this guide is for using R on your own computer after the course.
+
 This is optional and not part of the course's setup: the course runs in your codespace, and every lab is written for it. Use this page if you want R, RStudio and an AI coding agent on your own Mac or Windows computer, for your own work during the term or after it. It works offline and has no hours limit.
 
 Your own computer does not get the course's IPUMS and KoboToolbox keys, which reach codespaces only, so here you use your own accounts. Make them first, with your personal email address:

@@ -50,7 +50,7 @@ ipums_key <- function() {
   if (!nzchar(Sys.getenv("IPUMS_API_KEY")))
     stop("No IPUMS key in this R session. ",
          if (in_codespace()) "The course key reaches every codespace; tell Sifat it is missing."
-         else "Click Course setup in the PPOL 6818 panel, or run ppol6818::setup().", call. = FALSE)
+         else "Click Course setup in the PPOL 6818 section below the file list, or run ppol6818::setup().", call. = FALSE)
 }
 
 # A finished extract on the account made from the same definition whose

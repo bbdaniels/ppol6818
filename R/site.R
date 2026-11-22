@@ -137,7 +137,7 @@ project_inputs <- function() {
 #' Build the minisite into docs/: the landing page, the deck, and the
 #' registered report and final paper as PDFs, each shown on its own page.
 #'
-#' Click Build minisite in the PPOL 6818 panel, or run
+#' Click Build minisite in the PPOL 6818 section, or run
 #' `ppol6818::build_site()` in the R console: in a codespace it builds your
 #' pair's repository wherever the console is. It first pulls your
 #' partner's pushed work (your own commits and uncommitted changes are

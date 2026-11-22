@@ -47,7 +47,7 @@ xlsx_type <- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 kobo_token <- function() {
   tok <- Sys.getenv("KOBO_API_TOKEN")
-  if (!nzchar(tok)) stop("No KoboToolbox key in this R session. Click Course setup in the PPOL 6818 panel, or run ppol6818::setup().", call. = FALSE)
+  if (!nzchar(tok)) stop("No KoboToolbox key in this R session. Click Course setup in the PPOL 6818 section below the file list, or run ppol6818::setup().", call. = FALSE)
   tok
 }
 
