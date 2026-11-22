@@ -1,4 +1,4 @@
 {
-  "version": "2.4.0",
-  "note": "The course codespace has new software: readxl, for reading KoboToolbox forms in weeks 7 and 8."
+  "version": "2.5.0",
+  "note": "The course codespace now gives your AI agent the course rules from the moment it starts."
 }
