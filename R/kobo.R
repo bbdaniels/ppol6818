@@ -10,12 +10,33 @@
 # form lists show a student's own forms first, and replacing or deleting a form
 # made from another student's repository stops unless asked for by name.
 
-# Who is calling: the GitHub user and repository a codespace sets, or, outside
-# a codespace, the system user and the current folder's name.
-kobo_maker <- function() {
+# Who is calling: the GitHub user a codespace sets (outside one, the system
+# user) and the repository. With `path`, the repository is the one that holds
+# that file, so a form deployed from the pair's folder in a student's codespace
+# is tagged with the pair repository, not the lab repository the codespace was
+# opened on. Without it, or for a file in no repository, it is the codespace's
+# repository (outside one, the current folder's name). `repos` holds every
+# repository whose forms count as the caller's: that one, the codespace's, and
+# the pair repository named in the lab repository's course/project.
+kobo_maker <- function(path = NULL) {
   user <- Sys.getenv("GITHUB_USER", Sys.getenv("USER", "unknown"))
-  repo <- basename(Sys.getenv("GITHUB_REPOSITORY", getwd()))
-  list(user = user, repo = repo, tag = sprintf("(%s, %s)", user, repo))
+  here <- basename(Sys.getenv("GITHUB_REPOSITORY", getwd()))
+  repo <- if (is.null(path)) "" else file_repo(path)
+  if (!nzchar(repo)) repo <- here
+  repos <- unique(c(repo, here, pair_repo()))
+  list(user = user, repo = repo, repos = repos[nzchar(repos)], tag = sprintf("(%s, %s)", user, repo))
+}
+
+# The name of the git repository a file is in: the nearest folder above it
+# that holds .git, or "" when there is none.
+file_repo <- function(path) {
+  d <- dirname(normalizePath(path, mustWork = FALSE))
+  repeat {
+    if (file.exists(file.path(d, ".git"))) return(basename(d))
+    up <- dirname(d)
+    if (identical(up, d)) return("")
+    d <- up
+  }
 }
 
 # The maker a form's name carries, or NULL for a form named without one.
@@ -29,7 +50,7 @@ form_maker <- function(name) {
 is_mine <- function(name, me = kobo_maker()) {
   vapply(name, function(n) {
     f <- form_maker(n %||% "")
-    !is.null(f) && (f$user == me$user || f$repo == me$repo)
+    !is.null(f) && (f$user == me$user || f$repo %in% me$repos)
   }, TRUE, USE.NAMES = FALSE)
 }
 
@@ -258,12 +279,13 @@ kobo_import <- function(uid, path, name) {
 #' uid and submissions.
 #' @param path The XLSForm (.xlsx).
 #' @param name The form's name; the file name when omitted. The name gets
-#'   "(GitHub user, repository)" added, since the course shares one account.
+#'   "(GitHub user, repository)" added, since the course shares one account;
+#'   the repository is the one that holds `path`.
 #' @return A list with the form's uid, name, web_link (for respondents) and manage_link.
 #' @export
 kobo_deploy <- function(path, name = tools::file_path_sans_ext(basename(path))) {
   if (!file.exists(path)) stop("No file at ", path, call. = FALSE)
-  if (is.null(form_maker(name))) name <- paste(name, kobo_maker()$tag)
+  if (is.null(form_maker(name))) name <- paste(name, kobo_maker(path)$tag)
   uid <- kobo_request("/api/v2/assets/", "POST", body = list(name = name, asset_type = "survey"))$uid
   # A failed upload would otherwise leave an empty draft form on the account.
   tryCatch(kobo_import(uid, path, name), error = function(e) {

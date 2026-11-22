@@ -11,6 +11,22 @@ stopifnot(identical(ns$form_maker("form (ben, project-ana-ben)"), list(user = "b
 names <- c("form (ana, lab-ana)", "form (ben, project-ana-ben)", "form (cy, project-cy-di)", "Old form", NA)
 stopifnot(identical(ns$is_mine(names, me), c(TRUE, TRUE, FALSE, FALSE, FALSE)))
 
+# In a student's codespace, opened on the lab repository: a form deployed
+# from the pair's folder is tagged with the pair repository, a form from the
+# lab folder with the lab repository, and the partner's pair forms are theirs.
+ws <- file.path(tempfile("ws"))
+for (r in c("lab-ana", "project-ana-ben")) dir.create(file.path(ws, r, ".git"), recursive = TRUE)
+dir.create(file.path(ws, "lab-ana", "course")); writeLines("project-ana-ben", file.path(ws, "lab-ana", "course", "project"))
+dir.create(file.path(ws, "project-ana-ben", "survey")); invisible(file.create(file.path(ws, "project-ana-ben", "survey", "form.xlsx")))
+old <- Sys.getenv(c("GITHUB_REPOSITORY", "PPOL6818_DIR"))
+Sys.setenv(GITHUB_REPOSITORY = "ppol-6818-2027/lab-ana", PPOL6818_DIR = ws)
+stopifnot(identical(ns$kobo_maker(file.path(ws, "project-ana-ben", "survey", "form.xlsx"))$tag, "(ana, project-ana-ben)"))
+stopifnot(identical(ns$kobo_maker(file.path(ws, "lab-ana", "week-07", "form.xlsx"))$tag, "(ana, lab-ana)"))
+stopifnot(identical(ns$kobo_maker(file.path(tempdir(), "nowhere", "form.xlsx"))$tag, "(ana, lab-ana)"))
+stopifnot(identical(ns$is_mine(c("f (ben, project-ana-ben)", "f (ben, lab-ben)", "f (cy, project-cy-di)")), c(TRUE, FALSE, FALSE)))
+do.call(Sys.setenv, as.list(old))
+unlink(ws, recursive = TRUE)
+
 # kobo_forms with a stubbed API: own forms first, mine = TRUE filters.
 assets <- lapply(c("form (cy, project-cy-di)", "form (ana, lab-ana)", "Old form", "form (ben, project-ana-ben)"),
                  function(n) list(uid = paste0("u", nchar(n)), name = n, deployment_status = "deployed"))
